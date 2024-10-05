@@ -1,0 +1,59 @@
+### API Requests for Testing ###
+
+#### User Authentication ####
+
+##### Register User #####
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "id":1,
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "1234567890",
+  "password": "Password123",
+  "role": "aid_recipient"
+}
+
+##### Login User #####
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "Password123"
+}
+
+#### Aid Requests ####
+
+##### Get All Aid Requests #####
+GET http://localhost:3000/aidrequests
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+
+##### Create Aid Request #####
+POST http://localhost:3000/aidrequests
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "type": "Food Assistance",
+  "description": "Need food for a family of four"
+}
+
+#### Organizations ####
+
+##### Get All Organizations #####
+GET http://localhost:3000/organizations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+
+##### Create Organization #####
+POST http://localhost:3000/organizations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+Content-Type: application/json
+
+{
+  "name": "Helping Hands",
+  "address": "123 Main St",
+  "contactInfo": "contact@helpinghands.org"
+}
