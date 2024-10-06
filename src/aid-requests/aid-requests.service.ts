@@ -17,7 +17,7 @@ export class AidRequestsService {
 
   async findOne(aidRequestId: number): Promise<AidRequest> {
     return this.aidRequestModel.findOne({
-      where: { userId: aidRequestId },
+      where: { id: aidRequestId },
     });
   }
 

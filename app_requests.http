@@ -1,7 +1,7 @@
 ### API Requests for Testing ###
 
 #### User Authentication ####
-@TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIwMjA0NiwiZXhwIjoxNzI4MjA5MjQ2fQ.Wy2wT-PbYyjtiFSShX7OYyIjBCUcnu2QngXa73ZZabM
+@TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIxMzUxNywiZXhwIjoxNzI4MjIwNzE3fQ.U4xJVQxmb9hw0PepcicPm3ZF-FdDvc00QP1HNPx15y8
 ##### Register User #####
 POST http://localhost:3000/auth/register
 Content-Type: application/json
@@ -30,13 +30,18 @@ Content-Type: application/json
 GET http://localhost:3000/aidrequests
 Authorization: Bearer {{TOKEN}}
 
+##### Get One Aid Requests #####
+GET http://localhost:3000/aidrequests/1
+Authorization: Bearer {{TOKEN}}
+
+
 ##### Create Aid Request #####
 POST http://localhost:3000/aidrequests
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+Authorization: Bearer {{TOKEN}}
 Content-Type: application/json
 
 {
-  "userId": 1,
+  "userId": 2,
   "type": "Food Assistance",
   "description": "Need food for a family of four"
 }

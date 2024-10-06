@@ -20,8 +20,9 @@ export class AidRequestsController {
     return this.aidRequestsService.create(aidRequestDto);
   }
 
-  @Get('id')
-  findOne(@Param('id') id: string) {
-    this.aidRequestsService.findOne(+id);
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async findOne(@Param() params: any) {
+    return this.aidRequestsService.findOne(+params.id);
   }
 }
