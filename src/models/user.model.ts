@@ -44,4 +44,9 @@ export class User extends Model {
     field: 'Role',
   })
   role: string;
+  @Column({
+    type: DataType.STRING,
+    field: 'RefreshToken',
+  })
+  refreshToken: string;
 }
