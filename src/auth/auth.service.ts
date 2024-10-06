@@ -9,7 +9,6 @@ import { User } from '../models/user.model';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserDto } from './dto/user.dto';
-import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -33,20 +32,25 @@ export class AuthService {
     return { message: 'User registered successfully', user };
   }
 
-  async login(loginDto: LoginDto) {
-    const user = await this.userModel.findOne({
-      where: { email: loginDto.email },
-    });
-    if (
-      !user ||
-      !(await bcrypt.compare(loginDto.password, user.passwordHash))
-    ) {
+  async login(email: string, password: string) {
+    const user = await this.userModel.findOne({ where: { email } });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
+
     const payload = { userId: user.id, email: user.email, role: user.role };
-    const token = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
+      expiresIn: '15m',
     });
-    return { token };
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
+      expiresIn: '7d',
+    });
+
+    // Refresh token'ı veritabanında saklayabilirsiniz
+    await user.update({ refreshToken });
+
+    return { accessToken, refreshToken };
   }
 }
