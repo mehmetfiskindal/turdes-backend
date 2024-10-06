@@ -50,15 +50,14 @@ Content-Type: application/json
 
 ##### Get All Organizations #####
 GET http://localhost:3000/organizations
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0OTcwNCwiZXhwIjoxNzI4MTU2OTA0fQ.d95yRmYhNgyqIptHx_nBPu01MhUQdbicD7KoKlEIILA
-
+Authorization: Bearer {{TOKEN}}
 ##### Create Organization #####
 POST http://localhost:3000/organizations
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0OTcwNCwiZXhwIjoxNzI4MTU2OTA0fQ.d95yRmYhNgyqIptHx_nBPu01MhUQdbicD7KoKlEIILA
+Authorization: Bearer {{TOKEN}}
 Content-Type: application/json
 
 {
-  "name": "Helping Hands",
-  "address": "123 Main St",
-  "contactInfo": "contact@helpinghands.org"
+  "name": "TURDES",
+  "address": "123 Main",
+  "contactInfo": "turdes@app.org"
 }
