@@ -1,5 +1,5 @@
 // Aid Requests Controller (aid-requests/aid-requests.controller.ts)
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Param } from '@nestjs/common';
 import { AidRequestsService } from './aid-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AidRequestDto } from './dto/aid-request.dto';
@@ -18,5 +18,10 @@ export class AidRequestsController {
   @Post()
   async create(@Body() aidRequestDto: AidRequestDto) {
     return this.aidRequestsService.create(aidRequestDto);
+  }
+
+  @Get('id')
+  findOne(@Param('id') id: string) {
+    this.aidRequestsService.findOne(+id);
   }
 }

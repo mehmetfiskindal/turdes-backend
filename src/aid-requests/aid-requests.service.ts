@@ -15,6 +15,12 @@ export class AidRequestsService {
     return this.aidRequestModel.findAll();
   }
 
+  async findOne(aidRequestId: number): Promise<AidRequest> {
+    return this.aidRequestModel.findOne({
+      where: { userId: aidRequestId },
+    });
+  }
+
   async create(aidRequestDto: AidRequestDto): Promise<AidRequest> {
     return this.aidRequestModel.create({
       userId: aidRequestDto.userId,

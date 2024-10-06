@@ -1,7 +1,7 @@
 ### API Requests for Testing ###
 
 #### User Authentication ####
-
+@TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIwMjA0NiwiZXhwIjoxNzI4MjA5MjQ2fQ.Wy2wT-PbYyjtiFSShX7OYyIjBCUcnu2QngXa73ZZabM
 ##### Register User #####
 POST http://localhost:3000/auth/register
 Content-Type: application/json
@@ -28,7 +28,7 @@ Content-Type: application/json
 
 ##### Get All Aid Requests #####
 GET http://localhost:3000/aidrequests
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+Authorization: Bearer {{TOKEN}}
 
 ##### Create Aid Request #####
 POST http://localhost:3000/aidrequests
@@ -45,11 +45,11 @@ Content-Type: application/json
 
 ##### Get All Organizations #####
 GET http://localhost:3000/organizations
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0OTcwNCwiZXhwIjoxNzI4MTU2OTA0fQ.d95yRmYhNgyqIptHx_nBPu01MhUQdbicD7KoKlEIILA
 
 ##### Create Organization #####
 POST http://localhost:3000/organizations
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0MDMzNSwiZXhwIjoxNzI4MTQ3NTM1fQ.VfRnB6txX7pdzWXz61re7leGAiKiVhvKn1CHb3Owowg
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODE0OTcwNCwiZXhwIjoxNzI4MTU2OTA0fQ.d95yRmYhNgyqIptHx_nBPu01MhUQdbicD7KoKlEIILA
 Content-Type: application/json
 
 {
