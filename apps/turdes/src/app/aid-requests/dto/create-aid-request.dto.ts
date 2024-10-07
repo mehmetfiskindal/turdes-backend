@@ -32,7 +32,7 @@ export class CreateAidRequestDto {
   readonly description: string;
 
   @ApiProperty({
-    example: 'peding',
+    example: 'pending',
     description: 'aid status',
   })
   status?: string;

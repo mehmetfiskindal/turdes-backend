@@ -55,7 +55,7 @@ export class AidRequestsController {
     name: 'id',
     description: 'The ID of the aid request to retrieve',
   })
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id') id: string) {
     return this.aidRequestsService.findOne(id);
   }
 }

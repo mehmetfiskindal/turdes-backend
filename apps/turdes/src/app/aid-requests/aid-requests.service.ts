@@ -11,9 +11,11 @@ export class AidRequestsService {
     return this.prismaService.aidRequest.findMany();
   }
 
-  async findOne(aidRequestId: number): Promise<AidRequest> {
+  async findOne(aidRequestId: string) {
     return this.prismaService.aidRequest.findUnique({
-      where: { id: aidRequestId },
+      where: {
+        id: parseInt(aidRequestId, 10), // Convert the id to an integer
+      },
     });
   }
 
