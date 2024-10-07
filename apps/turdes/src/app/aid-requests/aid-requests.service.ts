@@ -34,4 +34,26 @@ export class AidRequestsService {
       },
     });
   }
+
+  // Yardım talebini duruma göre güncelleme
+  async updateStatus(id: number, status: string): Promise<AidRequest> {
+    const updatedAidRequest = await this.prismaService.aidRequest.update({
+      where: { id },
+      data: { status },
+    });
+
+    // Bildirim gönderme
+    await this.sendNotification(updatedAidRequest);
+
+    return updatedAidRequest;
+  }
+
+  // Bildirim gönderme fonksiyonu
+  private async sendNotification(aidRequest: AidRequest) {
+    // Burada bildirim sistemi entegre edilecek
+    // Örneğin, bir e-posta servisi veya push notification tetikleyebilirsiniz.
+    console.log(
+      `User with ID ${aidRequest.userId} is notified about status change: ${aidRequest.status}`
+    );
+  }
 }
