@@ -1,5 +1,5 @@
-// Replace "com.turdesmobile" here and below with your app's package name from the top of MainActivity.java
-package com.turdesmobile;
+// Replace "com.fiskindal.turdesmobile" here and below with your app's package name from the top of MainActivity.java
+package com.fiskindal.turdesmobile;
 
 import com.wix.detox.Detox;
 import com.wix.detox.config.DetoxConfig;

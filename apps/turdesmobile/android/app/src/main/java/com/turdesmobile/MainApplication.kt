@@ -1,4 +1,4 @@
-package com.turdesmobile
+package com.fiskindal.turdesmobile
 
 import android.app.Application
 import com.facebook.react.PackageList
