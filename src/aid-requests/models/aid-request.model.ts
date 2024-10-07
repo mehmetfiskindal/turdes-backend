@@ -1,8 +1,19 @@
 // AidRequest Model (aid-requests/models/aid-request.model.ts)
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Organization } from 'src/organizations/models/organization.model';
 
 @Table({ tableName: 'aid_requests' })
 export class AidRequest extends Model {
+  @ForeignKey(() => Organization)
+  @Column
+  organizationId: number;
+
   @Column({
     type: DataType.INTEGER,
     allowNull: false,

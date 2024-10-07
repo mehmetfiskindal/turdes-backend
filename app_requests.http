@@ -1,7 +1,7 @@
 ### API Requests for Testing ###
 
 #### User Authentication ####
-@TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIxODgyOSwiZXhwIjoxNzI4MjE5NzI5fQ.t_U3-tt2E4bNljx11lAxV3ZCzdswjxZxDSlgcwfPfvU
+@TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODI4NDcwMywiZXhwIjoxNzI4Mjg1NjAzfQ.dP5QAHzlvLp4i7XfliXUFQDB6FEcLiASsu_z7ixIuUo
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIxODE5MSwiZXhwIjoxNzI4ODIyOTkxfQ.5S1SQBEaiTiZ0WmY9JTVhEjdv-cJdMn-ADHu0N--8kc
 ##### Register User #####
 POST http://localhost:3000/auth/register
@@ -30,7 +30,7 @@ POST http://localhost:3000/auth/refresh
 Content-Type: application/json
 
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIxODczMCwiZXhwIjoxNzI4ODIzNTMwfQ.p26KDRQjDTCmzWzMVEh2roEmvb7MaBhuvI0Xv9s6Ajk"
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWlkX3JlY2lwaWVudCIsImlhdCI6MTcyODIzMjg0MywiZXhwIjoxNzI4ODM3NjQzfQ.bFjM6MyAuZIlPi0VjNongdaXQf4AX1tQffRvcZUfjvM"
 }
 
 #### Aid Requests ####
