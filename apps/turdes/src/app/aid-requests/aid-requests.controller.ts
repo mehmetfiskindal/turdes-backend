@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, UseGuards, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { AidRequestsService } from './aid-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
@@ -57,5 +65,36 @@ export class AidRequestsController {
   })
   async findOne(@Param('id') id: string) {
     return this.aidRequestsService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update aid request status and notify user' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'Onaylandı' },
+        deviceToken: { type: 'string', example: 'user_device_token' }, // FCM token
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Status updated and notification sent.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request.',
+  })
+  async updateStatus(
+    @Param('id') id: number,
+    @Body() body: { status: string; deviceToken: string }
+  ) {
+    return this.aidRequestsService.updateStatus(
+      id,
+      body.status,
+      body.deviceToken
+    );
   }
 }

@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
+import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 
 @Injectable()
 export class AidRequestsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly firebaseAdminService: FirebaseAdminService
+  ) {}
 
   async findAll(): Promise<AidRequest[]> {
     return this.prismaService.aidRequest.findMany();
@@ -35,25 +39,23 @@ export class AidRequestsService {
     });
   }
 
-  // Yardım talebini duruma göre güncelleme
-  async updateStatus(id: number, status: string): Promise<AidRequest> {
+  async updateStatus(id: number, status: string, userDeviceToken: string) {
     const updatedAidRequest = await this.prismaService.aidRequest.update({
       where: { id },
       data: { status },
     });
 
-    // Bildirim gönderme
-    await this.sendNotification(updatedAidRequest);
+    // Bildirim gönder
+    const message = `Yardım talebinizin durumu güncellendi: ${status}`;
+    try {
+      await this.firebaseAdminService.sendPushNotification(
+        userDeviceToken,
+        message
+      );
+    } catch (error) {
+      console.error(`Push notification gönderilemedi: ${error.message}`);
+    }
 
     return updatedAidRequest;
-  }
-
-  // Bildirim gönderme fonksiyonu
-  private async sendNotification(aidRequest: AidRequest) {
-    // Burada bildirim sistemi entegre edilecek
-    // Örneğin, bir e-posta servisi veya push notification tetikleyebilirsiniz.
-    console.log(
-      `User with ID ${aidRequest.userId} is notified about status change: ${aidRequest.status}`
-    );
   }
 }
