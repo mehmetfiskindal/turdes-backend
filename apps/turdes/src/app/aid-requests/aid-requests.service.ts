@@ -46,19 +46,11 @@ export class AidRequestsService {
     });
 
     const message = `Yardım talebinizin durumu güncellendi: ${status}`;
-    try {
-      await this.firebaseAdminService.sendPushNotification(
-        userDeviceToken,
-        message
-      );
-    } catch (error) {
-      // error nesnesinin tipini kontrol ediyoruz
-      if (error instanceof Error) {
-        console.error(`Push notification gönderilemedi: ${error.message}`);
-      } else {
-        console.error('Push notification gönderilemedi:', error);
-      }
-    }
+    await this.firebaseAdminService.sendPushNotification(
+      userDeviceToken,
+      'Yardım Talebi Güncellemesi',
+      message
+    );
 
     return updatedAidRequest;
   }

@@ -68,6 +68,7 @@ export class AidRequestsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update aid request status and notify user' })
   @ApiBody({
@@ -88,11 +89,11 @@ export class AidRequestsController {
     description: 'Bad request.',
   })
   async updateStatus(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() body: { status: string; deviceToken: string }
   ) {
     return this.aidRequestsService.updateStatus(
-      id,
+      parseInt(id, 10),
       body.status,
       body.deviceToken
     );

@@ -19,7 +19,7 @@
     "class-validator": "^0.14.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
-    "firebase-admin": "^12.6.0",
+    "google-auth-library": "^9.14.1",
     "next": "^14.2.14",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
