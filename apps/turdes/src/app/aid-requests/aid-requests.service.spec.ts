@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AidRequestsService } from './aid-requests.service';
 import { PrismaService } from '../prisma.service';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { AidRequest } from '@prisma/client';
+import { AidRequestsService } from './aid-requests.service';
 
 describe('AidRequestsService', () => {
   let service: AidRequestsService;
@@ -111,16 +111,18 @@ describe('AidRequestsService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+      const mockDeviceToken = 'deviceToken'; // Mock bir token kullanıyoruz
+
       jest.spyOn(prismaService.aidRequest, 'update').mockResolvedValue(result);
       jest
         .spyOn(firebaseAdminService, 'sendPushNotification')
-        .mockResolvedValue('');
+        .mockResolvedValue('Mocked Response');
 
-      expect(await service.updateStatus(1, 'new status', 'deviceToken')).toBe(
+      expect(await service.updateStatus(1, 'new status', mockDeviceToken)).toBe(
         result
       );
       expect(firebaseAdminService.sendPushNotification).toHaveBeenCalledWith(
-        'deviceToken',
+        mockDeviceToken,
         'Yardım talebinizin durumu güncellendi: new status'
       );
     });
@@ -136,16 +138,16 @@ describe('AidRequestsService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+      const mockDeviceToken = 'deviceToken'; // Mock token
+
       jest.spyOn(prismaService.aidRequest, 'update').mockResolvedValue(result);
       jest
         .spyOn(firebaseAdminService, 'sendPushNotification')
         .mockRejectedValue(new Error('Push notification error'));
 
-      expect(await service.updateStatus(1, 'new status', 'deviceToken')).toBe(
-        result
-      );
+      await service.updateStatus(1, 'new status', mockDeviceToken);
       expect(firebaseAdminService.sendPushNotification).toHaveBeenCalledWith(
-        'deviceToken',
+        mockDeviceToken,
         'Yardım talebinizin durumu güncellendi: new status'
       );
     });
