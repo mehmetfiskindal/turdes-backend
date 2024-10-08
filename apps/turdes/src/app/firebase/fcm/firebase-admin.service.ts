@@ -25,13 +25,13 @@ export class FirebaseAdminService {
 
   // Push notification gönderme
   async sendPushNotification(deviceToken: string, message: string) {
-    const payload = {
+    // Yeni send metodunu kullanıyoruz
+    return await admin.messaging().send({
+      token: deviceToken,
       notification: {
         title: 'Yardım Talebi Güncellemesi',
         body: message,
       },
-    };
-
-    return await admin.messaging().sendToDevice(deviceToken, payload);
+    });
   }
 }

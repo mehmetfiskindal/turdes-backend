@@ -39,15 +39,18 @@ export class AidRequestsService {
     });
   }
 
+  // Yardım talebini duruma göre güncelleme
   async updateStatus(id: number, status: string, userDeviceToken: string) {
+    // Yardım talebinin durumunu güncelleme
     const updatedAidRequest = await this.prismaService.aidRequest.update({
       where: { id },
       data: { status },
     });
 
-    // Bildirim gönder
+    // Admin durumu güncellediğinde bildirim gönder
     const message = `Yardım talebinizin durumu güncellendi: ${status}`;
     try {
+      // Kullanıcının cihaz token'ına bildirim gönder
       await this.firebaseAdminService.sendPushNotification(
         userDeviceToken,
         message
