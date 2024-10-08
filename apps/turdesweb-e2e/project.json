@@ -1,0 +1,9 @@
+{
+  "name": "turdesweb-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/turdesweb-e2e/src",
+  "tags": [],
+  "implicitDependencies": ["turdesweb"],
+  "// targets": "to see all targets run: nx show project turdesweb-e2e --web",
+  "targets": {}
+}

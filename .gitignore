@@ -112,3 +112,7 @@ yarn-error.log
 
 turdes-f2e8d-firebase-adminsdk-a5nlb-b206dab865.json
 google-services.json
+
+# Next.js
+.next
+out
