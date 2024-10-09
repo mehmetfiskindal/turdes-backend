@@ -1,13 +1,14 @@
-// Auth Service (auth/auth.service.ts)
 import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma.service'; // Prisma servisini ekleyin
+import { PrismaService } from '../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserDto } from './dto/user.dto';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -27,16 +28,14 @@ export class AuthService {
       );
     }
 
-    // Şifreyi hashleyin ve Prisma'ya `passwordHash` olarak gönderin
     const passwordHash: string = await bcrypt.hash(userDto.password, 10);
 
-    // Prisma'ya sadece gerekli alanları sağlayın
     const user = await this.prismaService.user.create({
       data: {
         name: userDto.name,
         email: userDto.email,
         phone: userDto.phone || null,
-        passwordHash: passwordHash, // Şifre hashlenmiş olarak Prisma'ya gönderiliyor
+        passwordHash: passwordHash,
         role: userDto.role,
       },
     });
@@ -44,14 +43,12 @@ export class AuthService {
     return { message: 'User registered successfully', user };
   }
 
-  async login(email: string, password: string) {
-    // Kullanıcıyı email ile bulma
+  async login(email: string, password: string, @Res() res: Response) {
     const user = await this.prismaService.user.findUnique({ where: { email } });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // JWT token'larını oluşturma
     const payload = { userId: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
@@ -62,12 +59,17 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    // Refresh token'ı veritabanına kaydetme
     await this.prismaService.user.update({
       where: { id: user.id },
       data: { refreshToken },
     });
 
-    return { accessToken, refreshToken };
+    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 900000 }); // 15 minutes
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      maxAge: 604800000,
+    }); // 7 days
+
+    return res.send({ message: 'Login successful' });
   }
 }
