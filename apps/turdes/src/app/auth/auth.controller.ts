@@ -6,6 +6,7 @@ import {
   Res,
   HttpCode,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
@@ -16,7 +17,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refresh.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
-
+import { JwtAuthGuard } from './jwt-auth.guard';
 @Controller('auth')
 @ApiTags('Authentication') // Api Tag ekledik
 export class AuthController {
@@ -100,5 +101,24 @@ export class AuthController {
       console.error(e);
       throw new UnauthorizedException('Refresh token expired or invalid');
     }
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Log out a user' })
+  @ApiResponse({ status: 200, description: 'User logged out successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async logout(@Req() req, @Res() res: Response) {
+    const userId = req.user.id; // req.user, JwtAuthGuard'dan gelir
+    await this.authService.logout(userId);
+
+    // Cookie temizleme işlemi (cookie-parser ile)
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+    });
+
+    return res.json({ message: 'User logged out successfully' });
   }
 }
