@@ -4,6 +4,8 @@ import {
   Body,
   UnauthorizedException,
   Res,
+  HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
@@ -12,6 +14,8 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refresh.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
 
 @Controller('auth')
 @ApiTags('Authentication') // Api Tag ekledik
@@ -31,14 +35,26 @@ export class AuthController {
     return this.authService.register(userDto);
   }
 
-  @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'User logged in successfully.' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials.' })
-  @ApiBody({ type: LoginDto }) // Body'nin tipini Swagger için belirttik
   @Post('login')
-  async login(loginDto: LoginDto, @Res() res) {
-    const { email, password } = loginDto;
-    return this.authService.login(email, password, res);
+  @HttpCode(200)
+  @UseGuards(AuthGuard('local')) // Assuming you're using local strategy for authentication
+  @ApiOperation({ summary: 'Log in a user' }) // Provides a description in Swagger
+  @ApiResponse({ status: 200, description: 'User logged in successfully.' }) // Successful response
+  @ApiResponse({ status: 401, description: 'Invalid credentials.' }) // Error response for invalid credentials
+  @ApiBody({ type: LoginDto }) // Specifies the body for Swagger, in this case, the LoginUserDto
+  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
+    const tokens = await this.authService.login(loginDto);
+
+    // Set refresh token as a cookie
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+    });
+
+    return res.json({
+      accessToken: tokens.accessToken,
+    });
   }
 
   @Post('refresh')

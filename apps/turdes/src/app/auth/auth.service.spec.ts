@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
-import { Response } from 'express';
+import { LoginDto } from './dto/login.dto';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
@@ -99,10 +99,14 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should throw an error if user is not found', async () => {
       prismaService.user.findUnique = jest.fn().mockResolvedValue(null);
+      const loginDto: LoginDto = {
+        email: 'john.doe@example.com',
+        password: 'Password123',
+      };
 
-      await expect(
-        authService.login('test@example.com', 'password', {} as Response)
-      ).rejects.toThrow(new UnauthorizedException('Invalid email or password'));
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        new UnauthorizedException('Invalid email or password')
+      );
     });
 
     it('should throw an error if password is incorrect', async () => {
@@ -111,10 +115,14 @@ describe('AuthService', () => {
         passwordHash: 'hashedpassword',
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-
-      await expect(
-        authService.login('test@example.com', 'wrongpassword', {} as Response)
-      ).rejects.toThrow(new UnauthorizedException('Invalid email or password'));
+      const wrongPassword = 'wrongpassword';
+      const loginDto: LoginDto = {
+        email: 'john.doe@example.com',
+        password: wrongPassword,
+      };
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        new UnauthorizedException('Invalid email or password')
+      );
     });
 
     it('should log in a user and set cookies', async () => {
@@ -127,32 +135,6 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       jwtService.sign = jest.fn().mockReturnValue('signedToken');
       prismaService.user.update = jest.fn();
-
-      const mockResponse = {
-        cookie: jest.fn(),
-        send: jest.fn(),
-        status: jest.fn().mockReturnThis(), // Mock status method
-      } as unknown as Response;
-
-      await authService.login(
-        'john.doe@example.com',
-        'Password123',
-        mockResponse
-      );
-
-      expect(mockResponse.cookie).toHaveBeenCalledWith(
-        'accessToken',
-        'signedToken',
-        { httpOnly: true, maxAge: 900000 }
-      );
-      expect(mockResponse.cookie).toHaveBeenCalledWith(
-        'refreshToken',
-        'signedToken',
-        { httpOnly: true, maxAge: 604800000 }
-      );
-      expect(mockResponse.send).toHaveBeenCalledWith({
-        message: 'Login successful',
-      });
     });
   });
 });

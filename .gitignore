@@ -116,3 +116,4 @@ google-services.json
 # Next.js
 .next
 out
+.env

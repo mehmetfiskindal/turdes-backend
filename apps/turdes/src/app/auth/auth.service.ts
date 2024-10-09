@@ -2,13 +2,12 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  Res,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserDto } from './dto/user.dto';
-import { Response } from 'express';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -43,9 +42,16 @@ export class AuthService {
     return { message: 'User registered successfully', user };
   }
 
-  async login(email: string, password: string, @Res() res: Response) {
-    const user = await this.prismaService.user.findUnique({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  async login(loginDto: LoginDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: loginDto.email,
+      },
+    });
+    if (
+      !user ||
+      !(await bcrypt.compare(loginDto.password, user.passwordHash))
+    ) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -63,13 +69,6 @@ export class AuthService {
       where: { id: user.id },
       data: { refreshToken },
     });
-
-    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 900000 }); // 15 minutes
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      maxAge: 604800000,
-    }); // 7 days
-
-    return res.send({ message: 'Login successful' });
+    return { accessToken, refreshToken };
   }
 }
