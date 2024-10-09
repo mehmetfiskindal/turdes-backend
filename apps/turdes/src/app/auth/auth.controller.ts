@@ -38,7 +38,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  @UseGuards(AuthGuard('local')) // Assuming you're using local strategy for authentication
+  @UseGuards(AuthGuard('local'))
   @ApiOperation({ summary: 'Log in a user' }) // Provides a description in Swagger
   @ApiResponse({ status: 200, description: 'User logged in successfully.' }) // Successful response
   @ApiResponse({ status: 401, description: 'Invalid credentials.' }) // Error response for invalid credentials
@@ -55,6 +55,7 @@ export class AuthController {
 
     return res.json({
       accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     });
   }
 
@@ -104,21 +105,12 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Log out a user' })
-  @ApiResponse({ status: 200, description: 'User logged out successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @UseGuards(JwtAuthGuard) // Kullanıcıyı doğrulamak için JWT Guard kullanıyoruz
   async logout(@Req() req, @Res() res: Response) {
-    const userId = req.user.id; // req.user, JwtAuthGuard'dan gelir
-    await this.authService.logout(userId);
+    const userId: number = req.user.userId; // Kullanıcının ID'sini alıyoruz ve number olarak belirtiyoruz
+    await this.authService.logout(userId); // Logout işlemini yapıyoruz
 
-    // Cookie temizleme işlemi (cookie-parser ile)
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-    });
-
+    res.clearCookie('refreshToken'); // Refresh token çerezini temizle
     return res.json({ message: 'User logged out successfully' });
   }
 }

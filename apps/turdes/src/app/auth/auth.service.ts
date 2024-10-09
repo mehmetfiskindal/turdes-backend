@@ -76,5 +76,16 @@ export class AuthService {
       where: { id: userId },
       data: { refreshToken: null },
     });
+    return { message: 'User logged out successfully' };
+  }
+  async validateUser(email: string, password: string) {
+    const user = await this.prismaService.user.findUnique({ where: { email } });
+
+    // Kullanıcı bulunmazsa veya şifre yanlışsa null döner
+    if (user && (await bcrypt.compare(password, user.passwordHash))) {
+      const { ...result } = user;
+      return result; // Şifreyi hariç tutup kullanıcı bilgilerini döneriz
+    }
+    return null;
   }
 }
