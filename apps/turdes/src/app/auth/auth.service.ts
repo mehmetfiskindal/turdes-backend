@@ -96,14 +96,32 @@ export class AuthService {
       return null;
     }
 
+    console.log('Retrieved user:', user); // Add logging
+
     if (typeof password !== 'string' || typeof user.passwordHash !== 'string') {
       console.log('Invalid password or passwordHash type'); // Add logging
+      console.log('password:', password, password); // Add logging
+      console.log('passwordHash:', typeof user.passwordHash, user.passwordHash); // Add logging
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       console.log('Invalid password'); // Add logging
+      return null;
+    }
+
+    const { passwordHash, ...result } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
+    return result;
+  }
+  // Validate user by ID
+  async validateUserById(userId: number) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      console.log('User not found by ID'); // Add logging
       return null;
     }
 
