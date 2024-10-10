@@ -26,7 +26,10 @@ export class AuthService {
     const passwordHash: string = await bcrypt.hash(userDto.password, 10);
     const user = await this.prismaService.user.create({
       data: {
-        ...userDto,
+        name: userDto.name,
+        email: userDto.email,
+        phone: userDto.phone,
+        role: userDto.role,
         passwordHash: passwordHash, // Hashlenmiş şifre kaydediliyor
       },
     });
@@ -83,7 +86,7 @@ export class AuthService {
   }
 
   // User validation method
-  async validateUser(email: string, userId: number) {
+  async validateUser(email: string, password: string) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
     });
@@ -93,8 +96,14 @@ export class AuthService {
       return null;
     }
 
-    if (user.id !== userId) {
-      console.log('User ID does not match'); // Add logging
+    if (typeof password !== 'string' || typeof user.passwordHash !== 'string') {
+      console.log('Invalid password or passwordHash type'); // Add logging
+      return null;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      console.log('Invalid password'); // Add logging
       return null;
     }
 
