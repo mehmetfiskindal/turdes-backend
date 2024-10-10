@@ -1,51 +1,31 @@
-// JwtAuthGuard (auth/guards/jwt-auth.guard.ts)
 import {
   Injectable,
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Request } from 'express';
-
 import { AuthGuard } from '@nestjs/passport';
-import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
-declare module 'express' {
-  export interface Request {
-    user?: { id: string; username: string; email: string }; // Replace with the actual user type
-  }
-}
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private jwtService: JwtService, private reflector: Reflector) {
+  constructor(private reflector: Reflector) {
     super();
   }
 
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<Request>();
-    const token = this.extractTokenFromHeader(request);
-
-    if (!token) {
-      throw new UnauthorizedException('Token not found');
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+    const result = super.canActivate(context);
+    if (result instanceof Observable) {
+      return result.pipe(map((value) => !!value)).toPromise();
     }
-
-    try {
-      const payload = this.jwtService.verify(token);
-      request.user = payload;
-    } catch (error: Error | unknown) {
-      console.error(error);
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    return true;
+    return result;
   }
 
-  private extractTokenFromHeader(request: Request): string | null {
-    const authHeader = request.headers.authorization;
-    if (!authHeader) {
-      return null;
+  handleRequest(err, user) {
+    if (err || !user) {
+      throw err || new UnauthorizedException('Unauthorized');
     }
-
-    const [type, token] = authHeader.split(' ');
-    return type === 'Bearer' ? token : null;
+    return user;
   }
 }

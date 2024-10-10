@@ -1,13 +1,10 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
+import { User } from '@prisma/client'; // Prisma'dan otomatik oluşturulan User tipi
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -16,76 +13,92 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
+  // Register method
   async register(userDto: UserDto) {
     const existingUser = await this.prismaService.user.findUnique({
       where: { email: userDto.email },
     });
 
     if (existingUser) {
-      throw new BadRequestException(
-        'A user with the same email already exists'
-      );
+      throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
 
     const passwordHash: string = await bcrypt.hash(userDto.password, 10);
-
     const user = await this.prismaService.user.create({
       data: {
-        name: userDto.name,
-        email: userDto.email,
-        phone: userDto.phone || null,
-        passwordHash: passwordHash,
-        role: userDto.role,
+        ...userDto,
+        passwordHash: passwordHash, // Hashlenmiş şifre kaydediliyor
       },
     });
 
-    return { message: 'User registered successfully', user };
+    return this.generateToken(user);
   }
 
+  // Login method
   async login(loginDto: LoginDto) {
     const user = await this.prismaService.user.findUnique({
-      where: {
-        email: loginDto.email,
-      },
+      where: { email: loginDto.email },
     });
-    if (
-      !user ||
-      !(await bcrypt.compare(loginDto.password, user.passwordHash))
-    ) {
-      throw new UnauthorizedException('Invalid email or password');
+
+    if (!user) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
-    const payload = { userId: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: '15m',
-    });
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: '7d',
-    });
+    if (
+      typeof loginDto.password !== 'string' ||
+      typeof user.passwordHash !== 'string'
+    ) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
 
-    await this.prismaService.user.update({
-      where: { id: user.id },
-      data: { refreshToken },
-    });
-    return { accessToken, refreshToken };
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.passwordHash
+    );
+    if (!isPasswordValid) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.generateToken(user);
   }
+
+  // Token generation
+  generateToken(user: User) {
+    const payload = { username: user.email, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload),
+      refresh_token: this.jwtService.sign(payload, {
+        expiresIn: '7d', // 7 gün
+      }),
+    };
+  }
+
+  // Logout method
   async logout(userId: number) {
     await this.prismaService.user.update({
       where: { id: userId },
-      data: { refreshToken: null },
+      data: { refreshToken: null }, // Kullanıcının refresh token'ı null yapılıyor
     });
     return { message: 'User logged out successfully' };
   }
-  async validateUser(email: string, password: string) {
-    const user = await this.prismaService.user.findUnique({ where: { email } });
 
-    // Kullanıcı bulunmazsa veya şifre yanlışsa null döner
-    if (user && (await bcrypt.compare(password, user.passwordHash))) {
-      const { ...result } = user;
-      return result; // Şifreyi hariç tutup kullanıcı bilgilerini döneriz
+  // User validation method
+  async validateUser(email: string, userId: number) {
+    const user = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      console.log('User not found'); // Add logging
+      return null;
     }
-    return null;
+
+    if (user.id !== userId) {
+      console.log('User ID does not match'); // Add logging
+      return null;
+    }
+
+    const { passwordHash, ...result } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
+    return result;
   }
 }

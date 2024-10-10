@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
@@ -53,5 +53,11 @@ export class AidRequestsService {
     );
 
     return updatedAidRequest;
+  }
+
+  async delete(id: number) {
+    return this.prismaService.aidRequest.delete({
+      where: { id },
+    });
   }
 }

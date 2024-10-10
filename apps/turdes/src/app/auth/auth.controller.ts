@@ -3,21 +3,21 @@ import {
   Post,
   Body,
   UnauthorizedException,
-  Res,
-  HttpCode,
   UseGuards,
-  Req,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refresh.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { Response } from 'express';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorators';
+import { User } from '@prisma/client';
 @Controller('auth')
 @ApiTags('Authentication') // Api Tag ekledik
 export class AuthController {
@@ -34,29 +34,6 @@ export class AuthController {
   @ApiBody({ type: UserDto }) // Body'nin tipini Swagger için belirttik
   async register(@Body() userDto: UserDto) {
     return this.authService.register(userDto);
-  }
-
-  @Post('login')
-  @HttpCode(200)
-  @UseGuards(AuthGuard('local'))
-  @ApiOperation({ summary: 'Log in a user' }) // Provides a description in Swagger
-  @ApiResponse({ status: 200, description: 'User logged in successfully.' }) // Successful response
-  @ApiResponse({ status: 401, description: 'Invalid credentials.' }) // Error response for invalid credentials
-  @ApiBody({ type: LoginDto }) // Specifies the body for Swagger, in this case, the LoginUserDto
-  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
-    const tokens = await this.authService.login(loginDto);
-
-    // Set refresh token as a cookie
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-    });
-
-    return res.json({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    });
   }
 
   @Post('refresh')
@@ -104,13 +81,26 @@ export class AuthController {
     }
   }
 
-  @Post('logout')
-  @UseGuards(JwtAuthGuard) // Kullanıcıyı doğrulamak için JWT Guard kullanıyoruz
-  async logout(@Req() req, @Res() res: Response) {
-    const userId: number = req.user.userId; // Kullanıcının ID'sini alıyoruz ve number olarak belirtiyoruz
-    await this.authService.logout(userId); // Logout işlemini yapıyoruz
+  @Post('login')
+  @ApiOperation({ summary: 'Log in a user' })
+  @ApiResponse({ status: 200, description: 'User logged in successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @UseGuards(AuthGuard('local')) // LocalStrategy kullanarak kimlik doğrulama
+  async login(@Body() loginDto: LoginDto) {
+    const token = await this.authService.login(loginDto);
+    return token; // Direkt JSON yanıtı döndürmek NestJS'de daha yaygın bir yaklaşımdır
+  }
 
-    res.clearCookie('refreshToken'); // Refresh token çerezini temizle
-    return res.json({ message: 'User logged out successfully' });
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@CurrentUser() user: User) {
+    // Artık user nesnesi direkt parametre olarak gelir
+    const userId = user?.id;
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    await this.authService.logout(userId);
+    return { message: 'User logged out successfully' };
   }
 }

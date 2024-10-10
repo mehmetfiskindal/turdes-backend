@@ -6,6 +6,7 @@ import {
   UseGuards,
   Param,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { AidRequestsService } from './aid-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -97,5 +98,23 @@ export class AidRequestsController {
       body.status,
       body.deviceToken
     );
+  }
+
+  //delete methodu eklendi
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a specific aid request by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully deleted aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to delete',
+  })
+  async delete(@Param('id') id: string) {
+    return this.aidRequestsService.delete(parseInt(id, 10));
   }
 }

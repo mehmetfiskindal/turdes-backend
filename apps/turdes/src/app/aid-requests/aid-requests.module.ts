@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 
 import { AidRequestsService } from './aid-requests.service';
 import { AidRequestsController } from './aid-requests.controller';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 
 @Module({

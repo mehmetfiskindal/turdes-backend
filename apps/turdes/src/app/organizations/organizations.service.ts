@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service'; // Prisma servisi eklendi
+import { PrismaService } from '../prisma/prisma.service'; // Prisma servisi eklendi
 import { OrganizationDto } from './dto/organization.dto';
 import { Organization } from '@prisma/client'; // Prisma Organization modelini kullanıyoruz
 
