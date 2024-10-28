@@ -73,6 +73,7 @@ export class AuthService {
       refresh_token: this.jwtService.sign(payload, {
         expiresIn: '7d', // 7 gün
       }),
+      userId: user.id,
     };
   }
 

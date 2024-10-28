@@ -11,34 +11,85 @@ export class AidRequestsService {
     private readonly firebaseAdminService: FirebaseAdminService
   ) {}
 
+  // Yorum ekleme
+  async addComment(aidRequestId: number, content: string) {
+    return this.prismaService.comment.create({
+      data: {
+        content,
+        aidRequest: {
+          connect: { id: aidRequestId },
+        },
+      },
+    });
+  }
+
+  // Belge yükleme
+  async uploadDocument(
+    aidRequestId: number,
+    documentName: string,
+    documentUrl: string
+  ) {
+    return this.prismaService.document.create({
+      data: {
+        name: documentName,
+        url: documentUrl,
+        aidRequest: {
+          connect: { id: aidRequestId },
+        },
+      },
+    });
+  }
+
+  // Tüm yardım taleplerini listeleme
   async findAll(): Promise<AidRequest[]> {
     return this.prismaService.aidRequest.findMany();
   }
 
-  async findOne(aidRequestId: string) {
-    return this.prismaService.aidRequest.findUnique({
+  // Belirli bir yardım talebini bulma
+  async findOne(aidRequestId: number, organizationId: number) {
+    return this.prismaService.aidRequest.findFirst({
       where: {
-        id: parseInt(aidRequestId, 10), // Convert the id to an integer
+        id: aidRequestId,
+        organizationId: organizationId, // id'nin integer olduğuna dikkat edin
       },
     });
   }
 
-  async create(data: CreateAidRequestDto): Promise<AidRequest> {
+  async create(createAidRequestDto: CreateAidRequestDto) {
+    const { userId, organizationId, ...data } = createAidRequestDto;
+
+    // Ensure the user exists
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Ensure the organization exists
+    const organization = await this.prismaService.organization.findUnique({
+      where: { id: organizationId },
+    });
+
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+
     return this.prismaService.aidRequest.create({
       data: {
-        type: data.type,
-        description: data.description,
-        organization: {
-          connect: { id: data.organizationId },
-        },
+        ...data,
         user: {
-          connect: { id: data.userId },
+          connect: { id: userId },
         },
-        // createdAt ve updatedAt otomatik olarak Prisma tarafından eklenecek
+        organization: {
+          connect: { id: organizationId },
+        },
       },
     });
   }
 
+  // Yardım talebi durumunu güncelleme ve bildirim gönderme
   async updateStatus(id: number, status: string, userDeviceToken: string) {
     const updatedAidRequest = await this.prismaService.aidRequest.update({
       where: { id },
@@ -55,6 +106,7 @@ export class AidRequestsService {
     return updatedAidRequest;
   }
 
+  // Yardım talebini silme
   async delete(id: number) {
     return this.prismaService.aidRequest.delete({
       where: { id },

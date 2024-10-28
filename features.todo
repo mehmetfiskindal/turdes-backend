@@ -1,4 +1,4 @@
-1. Yardım Talebi Takip Sistemi
+1. Yardım Talebi Takip Sistemi (✓)
 
 	•	Talep Durumu Görüntüleme: Yardım talebinde bulunanlar, taleplerinin hangi aşamada olduğunu (örneğin, “Beklemede”, “Onaylandı”, “Reddedildi”) kolayca görebilirler.
 	•	Bildirim Sistemi: Talep durumu değiştiğinde kullanıcıya anında bildirim gönderme (push notification veya e-posta).

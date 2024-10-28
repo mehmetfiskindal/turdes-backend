@@ -64,8 +64,12 @@ export class AidRequestsController {
     name: 'id',
     description: 'The ID of the aid request to retrieve',
   })
-  async findOne(@Param('id') id: string) {
-    return this.aidRequestsService.findOne(id);
+  @ApiParam({
+    name: 'organizationId',
+    description: 'The ID of the organization to retrieve',
+  })
+  async findOne(@Param('id') id: number, @Param('organizationId') organizationId: number) {
+    return this.aidRequestsService.findOne(id, organizationId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -90,11 +94,11 @@ export class AidRequestsController {
     description: 'Bad request.',
   })
   async updateStatus(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @Body() body: { status: string; deviceToken: string }
   ) {
     return this.aidRequestsService.updateStatus(
-      parseInt(id, 10),
+      id,
       body.status,
       body.deviceToken
     );
@@ -114,7 +118,7 @@ export class AidRequestsController {
     name: 'id',
     description: 'The ID of the aid request to delete',
   })
-  async delete(@Param('id') id: string) {
-    return this.aidRequestsService.delete(parseInt(id, 10));
+  async delete(@Param('id') id: number) {
+    return this.aidRequestsService.delete(id);
   }
 }

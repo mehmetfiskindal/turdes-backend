@@ -15,22 +15,26 @@ model User {
   passwordHash String       @db.VarChar(255)
   role         String       @db.VarChar(255)
   refreshToken String?      @db.VarChar(255)
-  aidRequests  AidRequest[]
   createdAt    DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
+  aidRequests  AidRequest[]
 }
+
+
 
 model AidRequest {
   id             Int          @id @default(autoincrement())
   type           String       @db.VarChar(255)
   description    String       @db.VarChar(255)
   status         String?      @default("pending") @db.VarChar(255)
-  organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId Int
-  user           User         @relation(fields: [userId], references: [id])
   userId         Int
   createdAt      DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime     @updatedAt @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  comments       Comment[]
+  documents      Document[]
 }
 
 model Organization {
@@ -38,7 +42,28 @@ model Organization {
   name        String       @db.VarChar(255)
   address     String?      @db.VarChar(255)
   contactInfo String?      @db.VarChar(255)
-  aidRequests AidRequest[]
   createdAt   DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+  aidRequests AidRequest[]
+}
+
+
+
+model Comment {
+  id           Int        @id @default(autoincrement())
+  content      String     @db.VarChar(255)
+  aidRequestId Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  aidRequest   AidRequest @relation(fields: [aidRequestId], references: [id])
+}
+
+model Document {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(255)
+  url          String     @db.VarChar(255)
+  aidRequestId Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  aidRequest   AidRequest @relation(fields: [aidRequestId], references: [id])
 }
