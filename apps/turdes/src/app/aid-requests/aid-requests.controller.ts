@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Delete,
+  Req,
 } from '@nestjs/common';
 import { AidRequestsService } from './aid-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -27,19 +28,19 @@ export class AidRequestsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Get()
   @ApiOperation({ summary: 'Get all aid requests' })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved all aid requests.',
   })
-  async getAll() {
-    return this.aidRequestsService.findAll();
+  @Get()
+  async findAll(@Req() req) {
+    const userId = req.user.id;
+    return this.aidRequestsService.findAll(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Post()
   @ApiOperation({ summary: 'Create a new aid request' })
   @ApiResponse({
     status: 201,
@@ -47,8 +48,10 @@ export class AidRequestsController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiBody({ type: CreateAidRequestDto }) // Swagger için body tanımı
-  async create(@Body() aidRequestDto: CreateAidRequestDto) {
-    return this.aidRequestsService.create(aidRequestDto);
+  @Post()
+  async create(@Body() createAidRequestDto: CreateAidRequestDto, @Req() req) {
+    const userId = req.user.id;
+    return this.aidRequestsService.create(createAidRequestDto, userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -68,7 +71,10 @@ export class AidRequestsController {
     name: 'organizationId',
     description: 'The ID of the organization to retrieve',
   })
-  async findOne(@Param('id') id: number, @Param('organizationId') organizationId: number) {
+  async findOne(
+    @Param('id') id: number,
+    @Param('organizationId') organizationId: number
+  ) {
     return this.aidRequestsService.findOne(id, organizationId);
   }
 

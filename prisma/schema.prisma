@@ -20,21 +20,24 @@ model User {
   aidRequests  AidRequest[]
 }
 
-
-
 model AidRequest {
-  id             Int          @id @default(autoincrement())
-  type           String       @db.VarChar(255)
-  description    String       @db.VarChar(255)
-  status         String?      @default("pending") @db.VarChar(255)
-  organizationId Int
-  userId         Int
-  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime     @updatedAt @db.Timestamptz(6)
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  user           User         @relation(fields: [userId], references: [id])
-  comments       Comment[]
-  documents      Document[]
+  id Int @id @default(autoincrement())
+
+  userId Int
+
+  organizationId Int?
+
+  type String
+
+  description String
+
+  status String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  Comment      Comment[]
+  Document     Document[]
 }
 
 model Organization {
@@ -46,8 +49,6 @@ model Organization {
   updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
   aidRequests AidRequest[]
 }
-
-
 
 model Comment {
   id           Int        @id @default(autoincrement())

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
@@ -41,50 +41,32 @@ export class AidRequestsService {
   }
 
   // Tüm yardım taleplerini listeleme
-  async findAll(): Promise<AidRequest[]> {
-    return this.prismaService.aidRequest.findMany();
-  }
-
-  // Belirli bir yardım talebini bulma
-  async findOne(aidRequestId: number, organizationId: number) {
-    return this.prismaService.aidRequest.findFirst({
-      where: {
-        id: aidRequestId,
-        organizationId: organizationId, // id'nin integer olduğuna dikkat edin
-      },
+  async findAll(userId: number): Promise<AidRequest[]> {
+    return this.prismaService.aidRequest.findMany({
+      where: { userId: userId },
     });
   }
 
-  async create(createAidRequestDto: CreateAidRequestDto) {
-    const { userId, organizationId, ...data } = createAidRequestDto;
-
-    // Ensure the user exists
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
+  async findOne(id: number, userId: number) {
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id },
     });
 
-    if (!user) {
-      throw new Error('User not found');
+    if (!aidRequest || aidRequest.userId !== userId) {
+      throw new UnauthorizedException(
+        'You do not have access to this aid request'
+      );
     }
 
-    // Ensure the organization exists
-    const organization = await this.prismaService.organization.findUnique({
-      where: { id: organizationId },
-    });
-
-    if (!organization) {
-      throw new Error('Organization not found');
-    }
-
+    return aidRequest;
+  }
+  //serviste kullanıcıya ait yardım taleplerini oluşturabilmen lazım
+  // Yardım talebi oluşturma
+  async create(createAidRequestDto: CreateAidRequestDto, userId: number) {
     return this.prismaService.aidRequest.create({
       data: {
-        ...data,
-        user: {
-          connect: { id: userId },
-        },
-        organization: {
-          connect: { id: organizationId },
-        },
+        ...createAidRequestDto,
+        userId: userId,
       },
     });
   }
