@@ -20,6 +20,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
+import { Roles } from '../roles/roles.decorator';
+import { Role } from '../roles/roles.enum';
 
 @ApiTags('aidrequests')
 @Controller('aidrequests')
@@ -81,32 +83,21 @@ export class AidRequestsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update aid request status and notify user' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', example: 'Onaylandı' },
-        deviceToken: { type: 'string', example: 'user_device_token' }, // FCM token
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Status updated and notification sent.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request.',
-  })
-  async updateStatus(
-    @Param('id') id: number,
-    @Body() body: { status: string; deviceToken: string }
+  @Roles(Role.Admin)
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+    @Req() req
   ) {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const userDeviceToken = req.user.deviceToken; // Assuming device token is available in the user object
     return this.aidRequestsService.updateStatus(
-      id,
-      body.status,
-      body.deviceToken
+      +id,
+      status,
+      userId,
+      userRole,
+      userDeviceToken
     );
   }
 
