@@ -43,7 +43,7 @@ export class AidRequestsService {
   // Tüm yardım taleplerini listeleme
   async findAll(userId: number): Promise<AidRequest[]> {
     return this.prismaService.aidRequest.findMany({
-      where: { userId: userId },
+      where: { userId: userId, isDeleted: false },
     });
   }
 
@@ -99,10 +99,10 @@ export class AidRequestsService {
     return updatedAidRequest;
   }
 
-  // Yardım talebini silme
   async delete(id: number) {
-    return this.prismaService.aidRequest.delete({
-      where: { id },
+    return this.prismaService.aidRequest.update({
+      where: { id: Number(id) },
+      data: { isDeleted: true },
     });
   }
 }

@@ -31,9 +31,9 @@ model AidRequest {
 
   description String
 
-  status String?
-
-  user User @relation(fields: [userId], references: [id])
+  status    String?
+  isDeleted Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id])
 
   organization Organization? @relation(fields: [organizationId], references: [id])
   Comment      Comment[]

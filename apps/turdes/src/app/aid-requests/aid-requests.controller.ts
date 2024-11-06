@@ -6,7 +6,6 @@ import {
   UseGuards,
   Param,
   Patch,
-  Delete,
   Req,
 } from '@nestjs/common';
 import { AidRequestsService } from './aid-requests.service';
@@ -22,6 +21,9 @@ import {
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '../roles/roles.enum';
+
+import { CheckPolicies } from '../casl/check-policies.decorator';
+import { Action } from '../casl/action';
 
 @ApiTags('aidrequests')
 @Controller('aidrequests')
@@ -82,8 +84,30 @@ export class AidRequestsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Patch(':id/status')
   @Roles(Role.Admin)
+  @CheckPolicies((ability) => ability.can(Action.Read, 'AidRequest'))
+  @ApiOperation({ summary: 'Update the status of a specific aid request' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully updated the status of the aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to update',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          description: 'The new status of the aid request',
+        },
+      },
+    },
+  })
+  @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
     @Body('status') status: string,
@@ -104,7 +128,6 @@ export class AidRequestsController {
   //delete methodu eklendi
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Delete(':id')
   @ApiOperation({ summary: 'Delete a specific aid request by ID' })
   @ApiResponse({
     status: 200,
@@ -115,6 +138,9 @@ export class AidRequestsController {
     name: 'id',
     description: 'The ID of the aid request to delete',
   })
+  @Roles(Role.Admin)
+  @CheckPolicies((ability) => ability.can(Action.Delete, 'AidRequest'))
+  @Patch(':id/delete')
   async delete(@Param('id') id: number) {
     return this.aidRequestsService.delete(id);
   }
