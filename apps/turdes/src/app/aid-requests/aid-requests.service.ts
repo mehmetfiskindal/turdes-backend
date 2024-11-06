@@ -43,7 +43,7 @@ export class AidRequestsService {
   // Tüm yardım taleplerini listeleme
   async findAll(userId: number): Promise<AidRequest[]> {
     return this.prismaService.aidRequest.findMany({
-      where: { userId: userId },
+      where: { userId: userId, isDeleted: false },
     });
   }
 
@@ -71,8 +71,19 @@ export class AidRequestsService {
     });
   }
 
-  // Yardım talebi durumunu güncelleme ve bildirim gönderme
-  async updateStatus(id: number, status: string, userDeviceToken: string) {
+  async updateStatus(
+    id: number,
+    status: string,
+    userId: number,
+    userRole: string,
+    userDeviceToken: string
+  ) {
+    if (userRole !== 'admin') {
+      throw new UnauthorizedException(
+        'Only admins can update the status of aid requests'
+      );
+    }
+
     const updatedAidRequest = await this.prismaService.aidRequest.update({
       where: { id },
       data: { status },
@@ -81,17 +92,17 @@ export class AidRequestsService {
     const message = `Yardım talebinizin durumu güncellendi: ${status}`;
     await this.firebaseAdminService.sendPushNotification(
       userDeviceToken,
-      'Yardım Talebi Güncellemesi',
+      'Aid Request Status Update',
       message
     );
 
     return updatedAidRequest;
   }
 
-  // Yardım talebini silme
   async delete(id: number) {
-    return this.prismaService.aidRequest.delete({
-      where: { id },
+    return this.prismaService.aidRequest.update({
+      where: { id: Number(id) },
+      data: { isDeleted: true },
     });
   }
 }

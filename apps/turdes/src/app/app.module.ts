@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { AidRequestsModule } from './aid-requests/aid-requests.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { ConfigModule } from '@nestjs/config';
+import { CaslModule } from './casl/casl.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     AidRequestsModule,
     OrganizationsModule,
+    CaslModule,
   ],
   controllers: [AppController],
   providers: [AppService],
