@@ -33,7 +33,6 @@ export class CaslAbilityFactory {
       cannot(Action.Update, 'AidRequest', { status: true }); // status alanını güncelleme yetkisi yok
     }
 
-    // Yetki nesnesini oluşturup döndürme
     return build({
       detectSubjectType: (item: unknown) =>
         item.constructor.name as ExtractSubjectType<Subjects>,

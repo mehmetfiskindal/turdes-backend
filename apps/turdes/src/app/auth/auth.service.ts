@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
-import { User } from '@prisma/client'; // Prisma'dan otomatik oluşturulan User tipi
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -26,11 +26,12 @@ export class AuthService {
     const passwordHash: string = await bcrypt.hash(userDto.password, 10);
     const user = await this.prismaService.user.create({
       data: {
-        name: userDto.name,
         email: userDto.email,
+        name: userDto.name,
         phone: userDto.phone,
         role: userDto.role,
         passwordHash: passwordHash, // Hashlenmiş şifre kaydediliyor
+        // Remove the password field
       },
     });
 
@@ -67,13 +68,12 @@ export class AuthService {
 
   // Token generation
   generateToken(user: User) {
-    const payload = { username: user.email, sub: user.id };
+    const payload = { username: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
       refresh_token: this.jwtService.sign(payload, {
         expiresIn: '7d', // 7 gün
       }),
-      userId: user.id,
     };
   }
 
@@ -101,8 +101,6 @@ export class AuthService {
 
     if (typeof password !== 'string' || typeof user.passwordHash !== 'string') {
       console.log('Invalid password or passwordHash type'); // Add logging
-      console.log('password:', password, password); // Add logging
-      console.log('passwordHash:', typeof user.passwordHash, user.passwordHash); // Add logging
       return null;
     }
 
@@ -115,6 +113,7 @@ export class AuthService {
     const { passwordHash, ...result } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
     return result;
   }
+
   // Validate user by ID
   async validateUserById(userId: number) {
     const user = await this.prismaService.user.findUnique({

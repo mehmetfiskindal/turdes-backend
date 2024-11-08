@@ -11,7 +11,6 @@ export class AidRequestsService {
     private readonly firebaseAdminService: FirebaseAdminService
   ) {}
 
-  // Yorum ekleme
   async addComment(aidRequestId: number, content: string) {
     return this.prismaService.comment.create({
       data: {
@@ -47,9 +46,14 @@ export class AidRequestsService {
     });
   }
 
-  async findOne(id: number, userId: number) {
+  async findOne(id: number, userId: number, organizationId: number) {
     const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id },
+      where: {
+        id: Number(id),
+        userId: userId,
+        isDeleted: false,
+        organizationId: Number(organizationId),
+      },
     });
 
     if (!aidRequest || aidRequest.userId !== userId) {
@@ -60,13 +64,31 @@ export class AidRequestsService {
 
     return aidRequest;
   }
-  //serviste kullanıcıya ait yardım taleplerini oluşturabilmen lazım
-  // Yardım talebi oluşturma
+
   async create(createAidRequestDto: CreateAidRequestDto, userId: number) {
+    if (createAidRequestDto.organizationId) {
+      const organization = await this.prismaService.organization.findUnique({
+        where: { id: createAidRequestDto.organizationId },
+      });
+
+      if (!organization) {
+        throw new Error('Organization not found');
+      }
+    }
+
     return this.prismaService.aidRequest.create({
       data: {
-        ...createAidRequestDto,
-        userId: userId,
+        type: createAidRequestDto.type,
+        description: createAidRequestDto.description,
+        status: createAidRequestDto.status,
+        organization: createAidRequestDto.organizationId
+          ? { connect: { id: createAidRequestDto.organizationId } }
+          : undefined,
+        latitude: createAidRequestDto.latitude,
+        longitude: createAidRequestDto.longitude,
+        user: {
+          connect: { id: userId },
+        },
       },
     });
   }
@@ -98,7 +120,7 @@ export class AidRequestsService {
 
     return updatedAidRequest;
   }
-
+  // Yardım talebi silinemez , sadece isDeleted parametresi true olur
   async delete(id: number) {
     return this.prismaService.aidRequest.update({
       where: { id: Number(id) },

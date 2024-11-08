@@ -1,11 +1,30 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 export class CreateAidRequestDto {
-  userId: number;
+  @ApiProperty()
+  @IsString()
+  readonly type: string;
 
-  organizationId: number | null;
+  @ApiProperty()
+  @IsString()
+  readonly description: string;
 
-  type: string;
+  @ApiProperty({ required: false })
+  @IsString()
+  readonly status: string;
 
-  description: string;
+  @ApiProperty()
+  readonly userId: number;
 
-  status?: string;
+  @ApiProperty()
+  readonly organizationId: number;
+
+  @ApiProperty()
+  readonly latitude: number;
+
+  @ApiProperty()
+  readonly longitude: number;
+
+  @ApiProperty({ required: false })
+  readonly isDeleted: boolean;
 }

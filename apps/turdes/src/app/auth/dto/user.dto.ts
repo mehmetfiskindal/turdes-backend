@@ -24,7 +24,7 @@ export class UserDto {
   readonly password: string; // Kullanıcıdan şifre alınacak, bu ham şifre
 
   @ApiProperty({
-    example: 'aid_recipient',
+    example: 'admin | user',
     description: 'The role of the user',
   })
   readonly role: string;
