@@ -67,7 +67,6 @@ export class AuthController {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      // Yeni access token oluşturma
       const payload = { userId: user.id, email: user.email, role: user.role };
       const newAccessToken = this.jwtService.sign(payload, {
         expiresIn: '15m',

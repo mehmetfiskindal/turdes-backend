@@ -30,10 +30,11 @@ model AidRequest {
   type String
 
   description String
-
-  status    String?
-  isDeleted Boolean @default(false)
-  user      User    @relation(fields: [userId], references: [id])
+  latitude    Float
+  longitude   Float
+  status      String?
+  isDeleted   Boolean @default(false)
+  user        User    @relation(fields: [userId], references: [id])
 
   organization Organization? @relation(fields: [organizationId], references: [id])
   Comment      Comment[]
@@ -41,13 +42,33 @@ model AidRequest {
 }
 
 model Organization {
-  id          Int          @id @default(autoincrement())
-  name        String       @db.VarChar(255)
-  address     String?      @db.VarChar(255)
-  contactInfo String?      @db.VarChar(255)
-  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
-  aidRequests AidRequest[]
+  id              Int          @id @default(autoincrement())
+  name            String
+  type            String
+  mission         String
+  address         String
+  phone           String
+  email           String
+  website         String?
+  socialMedia     String?
+  contactName     String
+  contactPhone    String
+  contactEmail    String
+  donationAccount String
+  iban            String
+  taxNumber       String
+  aidTypes        String
+  targetAudience  String
+  volunteerNeeds  String
+  activeProjects  String?
+  events          String?
+  logo            String?
+  establishedDate DateTime
+  latitude        Float
+  longitude       Float
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  aidRequest      AidRequest[]
 }
 
 model Comment {

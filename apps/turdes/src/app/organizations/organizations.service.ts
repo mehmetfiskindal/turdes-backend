@@ -1,26 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service'; // Prisma servisi eklendi
-import { OrganizationDto } from './dto/organization.dto';
-import { Organization } from '@prisma/client'; // Prisma Organization modelini kullanıyoruz
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
 @Injectable()
-export class OrganizationsService {
-  constructor(private readonly prismaService: PrismaService) {}
+export class OrganizationService {
+  constructor(private readonly prisma: PrismaService) {}
 
-  // Tüm organizasyonları getir
-  async findAll(): Promise<Organization[]> {
-    return this.prismaService.organization.findMany();
+  create(createOrganizationDto: CreateOrganizationDto) {
+    return this.prisma.organization.create({
+      data: createOrganizationDto,
+    });
   }
 
-  // Yeni organizasyon oluştur
-  async create(organizationDto: OrganizationDto): Promise<Organization> {
-    return this.prismaService.organization.create({
-      data: {
-        name: organizationDto.name,
-        address: organizationDto.address || null, // Opsiyonel alanları null yapalım
-        contactInfo: organizationDto.contactInfo || null,
-        // `createdAt` ve `updatedAt` Prisma tarafından otomatik doldurulacak
-      },
+  findAll() {
+    return this.prisma.organization.findMany();
+  }
+
+  findOne(id: number) {
+    return this.prisma.organization.findUnique({
+      where: { id },
+    });
+  }
+
+  update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
+    return this.prisma.organization.update({
+      where: { id },
+      data: updateOrganizationDto,
+    });
+  }
+
+  remove(id: number) {
+    return this.prisma.organization.delete({
+      where: { id },
     });
   }
 }

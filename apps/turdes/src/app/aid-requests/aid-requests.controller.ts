@@ -24,6 +24,7 @@ import { Role } from '../roles/roles.enum';
 
 import { CheckPolicies } from '../casl/check-policies.decorator';
 import { Action } from '../casl/action';
+import { RequestWithUser } from './interfaces/request-with-user.interface';
 
 @ApiTags('aidrequests')
 @Controller('aidrequests')
@@ -38,7 +39,7 @@ export class AidRequestsController {
     description: 'Successfully retrieved all aid requests.',
   })
   @Get()
-  async findAll(@Req() req) {
+  async findAll(@Req() req: RequestWithUser) {
     const userId = req.user.id;
     return this.aidRequestsService.findAll(userId);
   }
@@ -51,16 +52,22 @@ export class AidRequestsController {
     description: 'The aid request has been successfully created.',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiBody({ type: CreateAidRequestDto }) // Swagger için body tanımı
+  @ApiBody(
+    { type: CreateAidRequestDto } // Swagger için body tanımı
+  ) // Swagger için body tanımı
   @Post()
-  async create(@Body() createAidRequestDto: CreateAidRequestDto, @Req() req) {
+  async create(
+    @Body() createAidRequestDto: CreateAidRequestDto,
+    @Req() req: RequestWithUser
+  ) {
     const userId = req.user.id;
     return this.aidRequestsService.create(createAidRequestDto, userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Get(':id')
+  @CheckPolicies((ability) => ability.can(Action.Read, 'AidRequest'))
+  @Roles(Role.User)
   @ApiOperation({ summary: 'Get a specific aid request by ID' })
   @ApiResponse({
     status: 200,
@@ -75,11 +82,13 @@ export class AidRequestsController {
     name: 'organizationId',
     description: 'The ID of the organization to retrieve',
   })
+  @Get(':id/:organizationId')
   async findOne(
     @Param('id') id: number,
-    @Param('organizationId') organizationId: number
+    @Param('organizationId') organizationId: number,
+    @Req() req: RequestWithUser
   ) {
-    return this.aidRequestsService.findOne(id, organizationId);
+    return this.aidRequestsService.findOne(id, req.user.id, organizationId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -104,6 +113,10 @@ export class AidRequestsController {
           type: 'string',
           description: 'The new status of the aid request',
         },
+        deviceToken: {
+          type: 'string',
+          description: 'The device token of the user',
+        },
       },
     },
   })
@@ -111,17 +124,18 @@ export class AidRequestsController {
   updateStatus(
     @Param('id') id: string,
     @Body('status') status: string,
-    @Req() req
+    @Body('deviceToken') deviceToken: string,
+    @Req() req: RequestWithUser
   ) {
     const userId = req.user.id;
     const userRole = req.user.role;
-    const userDeviceToken = req.user.deviceToken; // Assuming device token is available in the user object
+
     return this.aidRequestsService.updateStatus(
       +id,
       status,
       userId,
       userRole,
-      userDeviceToken
+      deviceToken
     );
   }
 
