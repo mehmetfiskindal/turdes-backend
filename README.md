@@ -25,3 +25,5 @@ npm install
 npm install -g nx @nestjs/cli
 vscode nx eklentisini kurun
 ```
+![ekrangoruntusu1](https://github.com/developersailor/turdes/blob/main/Ekran%20Resmi%202024-11-11%2018.56.45.png)
+![ekrangoruntusu2](https://github.com/developersailor/turdes/blob/main/Ekran%20Resmi%202024-11-11%2018.57.08.png)
