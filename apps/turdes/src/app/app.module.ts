@@ -7,6 +7,7 @@ import { AidRequestsModule } from './aid-requests/aid-requests.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { ConfigModule } from '@nestjs/config';
 import { CaslModule } from './casl/casl.module';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { CaslModule } from './casl/casl.module';
     CaslModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrismaService],
 })
 export class AppModule {}

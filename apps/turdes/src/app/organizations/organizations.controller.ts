@@ -48,8 +48,6 @@ export class OrganizationsController {
     return this.organizationsService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new organization' })
   @ApiResponse({
     status: 201,
@@ -58,14 +56,13 @@ export class OrganizationsController {
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
   @ApiResponse({ status: 401, description: 'Unauthorized access.' })
   @ApiBody({ type: CreateOrganizationDto }) // Body'nin tipini Swagger'da belirtiyoruz
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Post()
   async create(@Body() organizationDto: CreateOrganizationDto) {
     return this.organizationsService.create(organizationDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @Patch(':id')
   @ApiOperation({ summary: 'Update an organization' })
   @ApiResponse({
     status: 200,
@@ -75,6 +72,9 @@ export class OrganizationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized access.' })
   @ApiBody({ type: UpdateOrganizationDto }) // Body'nin tipini Swagger'da belirtiyoruz
   @ApiParam({ name: 'id', type: 'number' }) // Parametre'nin tipini Swagger'da belirtiyoruz
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Patch(':id')
   async update(
     @Body() organizationDto: UpdateOrganizationDto,
     @Param('id') id: number
