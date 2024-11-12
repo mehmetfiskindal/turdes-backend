@@ -7,12 +7,12 @@ export class LoginDto {
     description: 'The email of the user',
   })
   @IsEmail()
-  readonly email: string;
+  readonly email!: string; // Definite assignment assertion
 
   @ApiProperty({
     example: 'Password123',
     description: 'The password of the user',
   })
   @IsString()
-  readonly password: string;
+  readonly password!: string; // Definite assignment assertion
 }

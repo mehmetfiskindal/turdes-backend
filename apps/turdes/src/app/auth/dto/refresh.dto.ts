@@ -7,5 +7,5 @@ export class RefreshTokenDto {
     description: 'Refresh token to generate a new access token',
   })
   @IsString()
-  readonly refreshToken: string;
+  readonly refreshToken!: string;
 }
