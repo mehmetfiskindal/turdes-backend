@@ -30,12 +30,16 @@ export class AuthService {
         name: userDto.name,
         phone: userDto.phone,
         role: userDto.role,
-        passwordHash: passwordHash, // Hashlenmiş şifre kaydediliyor
-        // Remove the password field
+        passwordHash: passwordHash,
       },
     });
 
-    return this.generateToken(user);
+    const tokens = this.generateToken(user);
+    await this.prismaService.user.update({
+      where: { id: user.id },
+      data: { refreshToken: tokens.refresh_token },
+    });
+    return tokens;
   }
 
   // Login method
@@ -63,7 +67,12 @@ export class AuthService {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
-    return this.generateToken(user);
+    const tokens = this.generateToken(user);
+    await this.prismaService.user.update({
+      where: { id: user.id },
+      data: { refreshToken: tokens.refresh_token },
+    });
+    return tokens;
   }
 
   // Token generation
@@ -77,15 +86,6 @@ export class AuthService {
       role: user.role,
       userId: user.id,
     };
-  }
-
-  // Logout method
-  async logout(userId: number) {
-    await this.prismaService.user.update({
-      where: { id: userId },
-      data: { refreshToken: null }, // Kullanıcının refresh token'ı null yapılıyor
-    });
-    return { message: 'User logged out successfully' };
   }
 
   // User validation method
@@ -129,5 +129,41 @@ export class AuthService {
 
     const { passwordHash, ...result } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
     return result;
+  }
+
+  // Refresh token validation and generation
+  async refreshToken(refreshToken: string) {
+    try {
+      const decoded = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: decoded.sub,
+          refreshToken: refreshToken,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException(
+          'Invalid refresh token',
+          HttpStatus.UNAUTHORIZED
+        );
+      }
+
+      const payload = { username: user.email, sub: user.id, role: user.role };
+      return {
+        access_token: this.jwtService.sign(payload),
+        refresh_token: this.jwtService.sign(payload, {
+          expiresIn: '7d',
+        }),
+      };
+    } catch (e) {
+      throw new HttpException(
+        'Refresh token expired or invalid',
+        HttpStatus.UNAUTHORIZED
+      );
+    }
   }
 }

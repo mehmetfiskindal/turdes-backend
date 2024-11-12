@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UnauthorizedException,
-  UseGuards,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,9 +7,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refresh.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorators';
-import { User } from '@prisma/client';
 @Controller('auth')
 @ApiTags('Authentication') // Api Tag ekledik
 export class AuthController {
@@ -48,36 +37,7 @@ export class AuthController {
   })
   @ApiBody({ type: RefreshTokenDto }) // Body'nin tipini Swagger için belirttik
   async refreshToken(@Body() refresh: RefreshTokenDto) {
-    const { refreshToken } = refresh;
-    try {
-      // Refresh token'ı doğrula
-      const decoded = this.jwtService.verify(refresh.refreshToken, {
-        secret: process.env.JWT_SECRET,
-      });
-
-      // Kullanıcıyı Prisma ile sorgula
-      const user = await this.prismaService.user.findUnique({
-        where: {
-          id: decoded.userId,
-          refreshToken: refreshToken,
-        },
-      });
-
-      if (!user) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      const payload = { userId: user.id, email: user.email, role: user.role };
-      const newAccessToken = this.jwtService.sign(payload, {
-        expiresIn: '15m',
-        secret: process.env.JWT_SECRET,
-      });
-
-      return { accessToken: newAccessToken };
-    } catch (e) {
-      console.error(e);
-      throw new UnauthorizedException('Refresh token expired or invalid');
-    }
+    return this.authService.refreshToken(refresh.refreshToken);
   }
 
   @Post('login')
@@ -88,18 +48,5 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     const token = await this.authService.login(loginDto);
     return token; // Direkt JSON yanıtı döndürmek NestJS'de daha yaygın bir yaklaşımdır
-  }
-
-  @Post('logout')
-  @UseGuards(JwtAuthGuard)
-  async logout(@CurrentUser() user: User) {
-    // Artık user nesnesi direkt parametre olarak gelir
-    const userId = user?.id;
-    if (!userId) {
-      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
-    }
-
-    await this.authService.logout(userId);
-    return { message: 'User logged out successfully' };
   }
 }
