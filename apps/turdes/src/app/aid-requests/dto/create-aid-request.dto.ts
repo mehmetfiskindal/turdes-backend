@@ -25,6 +25,6 @@ export class CreateAidRequestDto {
   @ApiProperty()
   readonly longitude: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: true, default: false })
   readonly isDeleted: boolean;
 }

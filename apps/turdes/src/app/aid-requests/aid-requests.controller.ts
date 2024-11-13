@@ -91,53 +91,53 @@ export class AidRequestsController {
     return this.aidRequestsService.findOne(id, req.user.id, organizationId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @Roles(Role.Admin)
-  @CheckPolicies((ability) => ability.can(Action.Read, 'AidRequest'))
-  @ApiOperation({ summary: 'Update the status of a specific aid request' })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully updated the status of the aid request.',
-  })
-  @ApiResponse({ status: 404, description: 'Aid request not found' })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the aid request to update',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        status: {
-          type: 'string',
-          description: 'The new status of the aid request',
-        },
-        deviceToken: {
-          type: 'string',
-          description: 'The device token of the user',
-        },
-      },
-    },
-  })
-  @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body('status') status: string,
-    @Body('deviceToken') deviceToken: string,
-    @Req() req: RequestWithUser
-  ) {
-    const userId = req.user.id;
-    const userRole = req.user.role;
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth()
+  // @Roles(Role.Admin)
+  // @CheckPolicies((ability) => ability.can(Action.Read, 'AidRequest'))
+  // @ApiOperation({ summary: 'Update the status of a specific aid request' })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Successfully updated the status of the aid request.',
+  // })
+  // @ApiResponse({ status: 404, description: 'Aid request not found' })
+  // @ApiParam({
+  //   name: 'id',
+  //   description: 'The ID of the aid request to update',
+  // })
+  // @ApiBody({
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       status: {
+  //         type: 'string',
+  //         description: 'The new status of the aid request',
+  //       },
+  //       deviceToken: {
+  //         type: 'string',
+  //         description: 'The device token of the user',
+  //       },
+  //     },
+  //   },
+  // })
+  // @Patch(':id/status')
+  // updateStatus(
+  //   @Param('id') id: string,
+  //   @Body('status') status: string,
+  //   @Body('deviceToken') deviceToken: string,
+  //   @Req() req: RequestWithUser
+  // ) {
+  //   const userId = req.user.id;
+  //   const userRole = req.user.role;
 
-    return this.aidRequestsService.updateStatus(
-      +id,
-      status,
-      userId,
-      userRole,
-      deviceToken
-    );
-  }
+  //   return this.aidRequestsService.updateStatus(
+  //     +id,
+  //     status,
+  //     userId,
+  //     userRole,
+  //     deviceToken
+  //   );
+  // }
 
   //delete methodu eklendi
   @UseGuards(JwtAuthGuard)
