@@ -16,4 +16,21 @@ export class I18nService {
   translate(key: string, lang: string): string {
     return this.translations[lang]?.[key] || key;
   }
+
+  addTranslation(lang: string, key: string, value: string): void {
+    if (!this.translations[lang]) {
+      this.translations[lang] = {};
+    }
+    this.translations[lang][key] = value;
+  }
+
+  removeTranslation(lang: string, key: string): void {
+    if (this.translations[lang]) {
+      delete this.translations[lang][key];
+    }
+  }
+
+  listTranslations(lang: string): { [key: string]: string } {
+    return this.translations[lang] || {};
+  }
 }

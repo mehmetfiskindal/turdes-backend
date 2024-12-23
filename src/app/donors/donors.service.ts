@@ -23,4 +23,11 @@ export class DonorsService {
       where: { donorId: Number(id) },
     });
   }
+
+  async findDonationHistory(donorId: number) {
+    return this.prisma.donation.findMany({
+      where: { donorId: Number(donorId) },
+      include: { donor: true },
+    });
+  }
 }
