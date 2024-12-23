@@ -12,9 +12,8 @@ export class CampaignsService {
       data: {
         name: createCampaignDto.name,
         description: createCampaignDto.description,
-        startDate: createCampaignDto.startDate,
-        endDate: createCampaignDto.endDate,
-        targetAmount: createCampaignDto.targetAmount,
+        endDate: createCampaignDto.endDate, // Ensure endDate is a valid property
+        targetAmount: createCampaignDto.targetAmount, // Ensure targetAmount is a valid property
         organization: {
           connect: { id: createCampaignDto.organizationId },
         },

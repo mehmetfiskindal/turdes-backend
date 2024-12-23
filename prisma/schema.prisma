@@ -144,6 +144,8 @@ model Campaign {
   name           String       @db.VarChar(255)
   description    String
   organizationId Int
+  endDate        DateTime
+  targetAmount   Float // Ensure targetAmount is defined
   organization   Organization @relation(fields: [organizationId], references: [id])
   events         Event[]
   createdAt      DateTime     @default(now())

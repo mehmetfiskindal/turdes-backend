@@ -114,6 +114,24 @@ export class OrganizationService {
         organization: {
           connect: { id: id },
         },
+        sender: { connect: { id: createMessageDto.senderId } }, // Ensure senderId exists in CreateMessageDto
+        receiver: { connect: { id: createMessageDto.receiverId } }, // Ensure receiverId exists in CreateMessageDto
+      },
+    });
+  }
+
+  async createMessage(
+    content: string,
+    organizationId: number,
+    senderId: number,
+    receiverId: number,
+  ) {
+    return this.prisma.message.create({
+      data: {
+        content,
+        organization: { connect: { id: organizationId } },
+        sender: { connect: { id: senderId } },
+        receiver: { connect: { id: receiverId } },
       },
     });
   }

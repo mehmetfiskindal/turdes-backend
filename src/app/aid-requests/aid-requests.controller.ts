@@ -53,12 +53,12 @@ export class AidRequestsController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiBody(
-    { type: CreateAidRequestDto } // Swagger için body tanımı
+    { type: CreateAidRequestDto }, // Swagger için body tanımı
   ) // Swagger için body tanımı
   @Post()
   async create(
     @Body() createAidRequestDto: CreateAidRequestDto,
-    @Req() req: RequestWithUser
+    @Req() req: RequestWithUser,
   ) {
     const userId = req.user.id;
     return this.aidRequestsService.create(createAidRequestDto, userId);
@@ -86,7 +86,7 @@ export class AidRequestsController {
   async findOne(
     @Param('id') id: number,
     @Param('organizationId') organizationId: number,
-    @Req() req: RequestWithUser
+    @Req() req: RequestWithUser,
   ) {
     return this.aidRequestsService.findOne(id, req.user.id, organizationId);
   }
@@ -113,6 +113,14 @@ export class AidRequestsController {
           type: 'string',
           description: 'The new status of the aid request',
         },
+        userId: {
+          type: 'string',
+          description: 'The ID of the user',
+        },
+        userRole: {
+          type: 'string',
+          description: 'The role of the user',
+        },
       },
     },
   })
@@ -120,10 +128,9 @@ export class AidRequestsController {
   async updateStatus(
     @Param('id') id: number,
     @Body('status') status: string,
-    @Req() req: RequestWithUser
+    @Body('userId') userId: string, // Ensure userId is a string
+    @Body('userRole') userRole: string,
   ) {
-    const userId = req.user.id;
-    const userRole = req.user.role;
     return this.aidRequestsService.updateStatus(id, status, userId, userRole);
   }
 
@@ -151,10 +158,7 @@ export class AidRequestsController {
     },
   })
   @Post(':id/comments')
-  async addComment(
-    @Param('id') id: number,
-    @Body('content') content: string
-  ) {
+  async addComment(@Param('id') id: number, @Body('content') content: string) {
     return this.aidRequestsService.addComment(id, content);
   }
 
@@ -189,9 +193,13 @@ export class AidRequestsController {
   async uploadDocument(
     @Param('id') id: number,
     @Body('documentName') documentName: string,
-    @Body('documentUrl') documentUrl: string
+    @Body('documentUrl') documentUrl: string,
   ) {
-    return this.aidRequestsService.uploadDocument(id, documentName, documentUrl);
+    return this.aidRequestsService.uploadDocument(
+      id,
+      documentName,
+      documentUrl,
+    );
   }
 
   //delete methodu eklendi

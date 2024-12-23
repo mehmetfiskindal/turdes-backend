@@ -107,7 +107,7 @@ export class AidRequestsService {
   async updateStatus(
     id: number,
     status: string,
-    userId: number,
+    userId: string,
     userRole: string,
   ) {
     if (userRole !== 'admin') {
