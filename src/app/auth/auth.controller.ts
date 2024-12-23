@@ -7,6 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refresh.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+
 @Controller('auth')
 @ApiTags('Authentication') // Api Tag ekledik
 export class AuthController {
@@ -48,5 +51,23 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     const token = await this.authService.login(loginDto);
     return token; // Direkt JSON yanıtı döndürmek NestJS'de daha yaygın bir yaklaşımdır
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset user password' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid request.' })
+  @ApiBody({ type: ResetPasswordDto })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('verify-email')
+  @ApiOperation({ summary: 'Verify user email' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid request.' })
+  @ApiBody({ type: VerifyEmailDto })
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
   }
 }

@@ -21,6 +21,7 @@ import {
 import { OrganizationService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @ApiTags('organizations') // Grouping under "organizations" in Swagger documentation
 @Controller('organizations')
@@ -80,5 +81,24 @@ export class OrganizationsController {
     @Param('id') id: number
   ) {
     return this.organizationsService.update(id, organizationDto);
+  }
+
+  @ApiOperation({ summary: 'Send a message to an organization' })
+  @ApiResponse({
+    status: 201,
+    description: 'Message sent successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized access.' })
+  @ApiBody({ type: CreateMessageDto }) // Body'nin tipini Swagger'da belirtiyoruz
+  @ApiParam({ name: 'id', type: 'number' }) // Parametre'nin tipini Swagger'da belirtiyoruz
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/messages')
+  async sendMessage(
+    @Body() messageDto: CreateMessageDto,
+    @Param('id') id: number
+  ) {
+    return this.organizationsService.sendMessage(id, messageDto);
   }
 }

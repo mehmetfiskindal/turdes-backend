@@ -93,33 +93,33 @@ export class AidRequestsService {
     });
   }
 
-  // async updateStatus(
-  //   id: number,
-  //   status: string,
-  //   userId: number,
-  //   userRole: string,
-  //   userDeviceToken: string
-  // ) {
-  //   if (userRole === 'admin') {
-  //     throw new UnauthorizedException(
-  //       'Only admins can update the status of aid requests'
-  //     );
-  //   }
+  async updateStatus(
+    id: number,
+    status: string,
+    userId: number,
+    userRole: string
+  ) {
+    if (userRole !== 'admin') {
+      throw new UnauthorizedException(
+        'Only admins can update the status of aid requests'
+      );
+    }
 
-  //   const updatedAidRequest = await this.prismaService.aidRequest.update({
-  //     where: { id: Number(id) },
-  //     data: { status: status },
-  //   });
+    const updatedAidRequest = await this.prismaService.aidRequest.update({
+      where: { id: Number(id) },
+      data: { status: status },
+    });
 
-  //   const message = `Yardım talebinizin durumu güncellendi: ${status}`;
-  //   await this.firebaseAdminService.sendPushNotification(
-  //     userDeviceToken,
-  //     'Aid Request Status Update',
-  //     message
-  //   );
+    const message = `Yardım talebinizin durumu güncellendi: ${status}`;
+    await this.firebaseAdminService.sendPushNotification(
+      userId,
+      'Aid Request Status Update',
+      message
+    );
 
-  //   return updatedAidRequest;
-  // }
+    return updatedAidRequest;
+  }
+
   // Yardım talebi silinemez , sadece isDeleted parametresi true olur
   async delete(id: number) {
     return this.prismaService.aidRequest.update({

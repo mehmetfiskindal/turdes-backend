@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class OrganizationService {
@@ -33,6 +34,17 @@ export class OrganizationService {
   remove(id: number) {
     return this.prisma.organization.delete({
       where: { id: Number(id) },
+    });
+  }
+
+  sendMessage(id: number, createMessageDto: CreateMessageDto) {
+    return this.prisma.message.create({
+      data: {
+        content: createMessageDto.content,
+        organization: {
+          connect: { id: id },
+        },
+      },
     });
   }
 }
