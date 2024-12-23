@@ -21,6 +21,7 @@ CREATE TABLE "AidRequest" (
     "status" VARCHAR(255) DEFAULT 'pending',
     "organizationId" INTEGER NOT NULL,
     "userId" INTEGER NOT NULL,
+    "locationId" INTEGER NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ(6) NOT NULL,
 
@@ -31,10 +32,10 @@ CREATE TABLE "AidRequest" (
 CREATE TABLE "Organization" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(255) NOT NULL,
-    "address" VARCHAR(255),
-    "contactInfo" VARCHAR(255),
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ(6) NOT NULL,
+    "contactInfoId" INTEGER NOT NULL,
+    "addressId" INTEGER NOT NULL,
 
     CONSTRAINT "Organization_pkey" PRIMARY KEY ("id")
 );
@@ -183,6 +184,37 @@ CREATE TABLE "Faq" (
     CONSTRAINT "Faq_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Location" (
+    "id" SERIAL NOT NULL,
+    "latitude" FLOAT NOT NULL,
+    "longitude" FLOAT NOT NULL,
+
+    CONSTRAINT "Location_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ContactInfo" (
+    "id" SERIAL NOT NULL,
+    "phone" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "contactName" VARCHAR(255) NOT NULL,
+    "contactPhone" VARCHAR(255) NOT NULL,
+    "contactEmail" VARCHAR(255) NOT NULL,
+
+    CONSTRAINT "ContactInfo_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Address" (
+    "id" SERIAL NOT NULL,
+    "address" VARCHAR(255) NOT NULL,
+    "latitude" FLOAT NOT NULL,
+    "longitude" FLOAT NOT NULL,
+
+    CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -191,6 +223,9 @@ ALTER TABLE "AidRequest" ADD CONSTRAINT "AidRequest_organizationId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "AidRequest" ADD CONSTRAINT "AidRequest_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AidRequest" ADD CONSTRAINT "AidRequest_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "Location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Comment" ADD CONSTRAINT "Comment_aidRequestId_fkey" FOREIGN KEY ("aidRequestId") REFERENCES "AidRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -224,3 +259,9 @@ ALTER TABLE "Event" ADD CONSTRAINT "Event_campaignId_fkey" FOREIGN KEY ("campaig
 
 -- AddForeignKey
 ALTER TABLE "Event" ADD CONSTRAINT "Event_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Organization" ADD CONSTRAINT "Organization_contactInfoId_fkey" FOREIGN KEY ("contactInfoId") REFERENCES "ContactInfo"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Organization" ADD CONSTRAINT "Organization_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "Address"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

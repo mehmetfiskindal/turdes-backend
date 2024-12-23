@@ -54,6 +54,9 @@ export class AidRequestsService {
         isDeleted: false,
         organizationId: Number(organizationId),
       },
+      include: {
+        location: true,
+      },
     });
 
     if (!aidRequest || aidRequest.userId !== userId) {
@@ -76,6 +79,13 @@ export class AidRequestsService {
       }
     }
 
+    const location = await this.prismaService.location.create({
+      data: {
+        latitude: createAidRequestDto.latitude,
+        longitude: createAidRequestDto.longitude,
+      },
+    });
+
     return this.prismaService.aidRequest.create({
       data: {
         type: createAidRequestDto.type,
@@ -84,8 +94,9 @@ export class AidRequestsService {
         organization: createAidRequestDto.organizationId
           ? { connect: { id: createAidRequestDto.organizationId } }
           : undefined,
-        latitude: createAidRequestDto.latitude,
-        longitude: createAidRequestDto.longitude,
+        location: {
+          connect: { id: location.id },
+        },
         user: {
           connect: { id: userId },
         },
