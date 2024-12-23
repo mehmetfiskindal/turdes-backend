@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { Express } from 'express';
 
 @Injectable()
 export class SecurityService {
-  private readonly allowedFileTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  private readonly allowedFileTypes = [
+    'image/jpeg',
+    'image/png',
+    'application/pdf',
+  ];
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
 
   validateFile(file: Express.Multer.File): boolean {
@@ -27,8 +32,14 @@ export class SecurityService {
     return isFileSafe;
   }
 
-  async saveFile(file: Express.Multer.File, uploadDir: string): Promise<string> {
-    const fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+  async saveFile(
+    file: Express.Multer.File,
+    uploadDir: string,
+  ): Promise<string> {
+    const fileHash = crypto
+      .createHash('sha256')
+      .update(file.buffer)
+      .digest('hex');
     const fileName = `${fileHash}${path.extname(file.originalname)}`;
     const filePath = path.join(uploadDir, fileName);
 

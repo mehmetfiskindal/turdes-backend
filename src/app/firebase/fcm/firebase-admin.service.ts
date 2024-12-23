@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { GoogleAuth } from 'google-auth-library';
-import * as serviceAccount from './turdes-f2e8d-firebase-adminsdk-a5nlb-b206dab865.json'; // Firebase'den indirdiğiniz JSON dosyası
+import * as serviceAccount from './turdes-f2e8d-firebase-adminsdk-a5nlb-b7b43600f9.json'; // Firebase'den indirdiğiniz JSON dosyası
 
 @Injectable()
 export class FirebaseAdminService {
@@ -28,7 +28,7 @@ export class FirebaseAdminService {
   public async sendPushNotification(
     deviceToken: string,
     title: string,
-    body: string
+    body: string,
   ) {
     const accessToken = await this.getAccessToken();
 
@@ -54,7 +54,7 @@ export class FirebaseAdminService {
     } catch (error) {
       console.error(
         'Error sending push notification:',
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
     }
   }

@@ -97,6 +97,8 @@ export class OrganizationService {
         address: {
           connect: { id: updatedAddress.id },
         },
+        latitude: updateOrganizationDto.latitude,
+        longitude: updateOrganizationDto.longitude,
       },
     });
   }

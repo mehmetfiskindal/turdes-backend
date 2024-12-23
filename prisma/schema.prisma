@@ -8,19 +8,22 @@ datasource db {
 }
 
 model User {
-  id           Int          @id @default(autoincrement())
-  name         String       @db.VarChar(255)
-  email        String       @unique @db.VarChar(255)
-  phone        String?      @db.VarChar(255)
-  passwordHash String       @db.VarChar(255)
-  role         String       @db.VarChar(255)
-  refreshToken String?      @db.VarChar(255)
-  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
-  aidRequests  AidRequest[]
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(255)
+  email         String         @unique @db.VarChar(255)
+  phone         String?        @db.VarChar(255)
+  passwordHash  String         @db.VarChar(255)
+  role          String         @db.VarChar(255)
+  refreshToken  String?        @db.VarChar(255)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
+  aidRequests   AidRequest[]
   notifications Notification[]
-  messages     Message[]
-  donations    Donation[]
+
+  donations       Donation[]
+  MessageSender   Message[]  @relation("MessageSender")
+  MessageReceiver Message[]  @relation("MessageReceiver")
+  Message         Message[]
 }
 
 model AidRequest {
@@ -40,25 +43,25 @@ model AidRequest {
   organization Organization? @relation(fields: [organizationId], references: [id])
   Comment      Comment[]
   Document     Document[]
-  location     Location @relation(fields: [locationId], references: [id])
+  location     Location      @relation(fields: [locationId], references: [id])
   locationId   Int
 }
 
 model Organization {
-  id              Int          @id @default(autoincrement())
-  name            String
-  type            String
-  mission         String
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  aidRequest      AidRequest[]
-  messages        Message[]
-  campaigns       Campaign[]
-  events          Event[]
-  contactInfo     ContactInfo  @relation(fields: [contactInfoId], references: [id])
-  contactInfoId   Int
-  address         Address      @relation(fields: [addressId], references: [id])
-  addressId       Int
+  id            Int          @id @default(autoincrement())
+  name          String
+  type          String
+  mission       String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  aidRequest    AidRequest[]
+  messages      Message[]
+  campaigns     Campaign[]
+  events        Event[]
+  contactInfo   ContactInfo  @relation(fields: [contactInfoId], references: [id])
+  contactInfoId Int
+  address       Address      @relation(fields: [addressId], references: [id])
+  addressId     Int
 }
 
 model Comment {
@@ -90,16 +93,18 @@ model Notification {
 }
 
 model Message {
-  id             Int          @id @default(autoincrement())
-  content        String       @db.VarChar(255)
+  id             Int           @id @default(autoincrement())
+  content        String        @db.VarChar(255)
   senderId       Int
   receiverId     Int
   organizationId Int?
-  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
-  receiver       User         @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender         User          @relation("MessageSender", fields: [senderId], references: [id])
+  receiver       User          @relation("MessageReceiver", fields: [receiverId], references: [id])
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  User           User?         @relation(fields: [userId], references: [id])
+  userId         Int?
 }
 
 model Volunteer {
@@ -113,13 +118,13 @@ model Volunteer {
 }
 
 model Donor {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(255)
-  email     String   @db.VarChar(255)
-  phone     String?  @db.VarChar(255)
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(255)
+  email     String     @db.VarChar(255)
+  phone     String?    @db.VarChar(255)
   donations Donation[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
 }
 
 model Donation {
@@ -183,23 +188,26 @@ model Faq {
 }
 
 model Location {
-  id        Int      @id @default(autoincrement())
-  latitude  Float
-  longitude Float
+  id         Int          @id @default(autoincrement())
+  latitude   Float
+  longitude  Float
+  AidRequest AidRequest[]
 }
 
 model ContactInfo {
-  id           Int      @id @default(autoincrement())
+  id           Int            @id @default(autoincrement())
   phone        String
   email        String
   contactName  String
   contactPhone String
   contactEmail String
+  Organization Organization[]
 }
 
 model Address {
-  id        Int      @id @default(autoincrement())
-  address   String
-  latitude  Float
-  longitude Float
+  id           Int            @id @default(autoincrement())
+  address      String
+  latitude     Float
+  longitude    Float
+  Organization Organization[]
 }

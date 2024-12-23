@@ -9,7 +9,12 @@ export class CampaignsService {
 
   async createCampaign(createCampaignDto: CreateCampaignDto) {
     return this.prisma.campaign.create({
-      data: createCampaignDto,
+      data: {
+        ...createCampaignDto,
+        organization: {
+          connect: { id: createCampaignDto.organizationId },
+        },
+      },
     });
   }
 
@@ -43,6 +48,9 @@ export class CampaignsService {
         campaign: {
           connect: { id: campaignId },
         },
+        organization: {
+          connect: { id: createEventDto.organizationId },
+        },
       },
     });
   }
@@ -59,7 +67,11 @@ export class CampaignsService {
     });
   }
 
-  async updateEvent(campaignId: number, eventId: number, updateEventDto: CreateEventDto) {
+  async updateEvent(
+    campaignId: number,
+    eventId: number,
+    updateEventDto: CreateEventDto,
+  ) {
     return this.prisma.event.update({
       where: { id: eventId, campaignId: campaignId },
       data: updateEventDto,

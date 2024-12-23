@@ -12,7 +12,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
   ) {}
 
   // Register method
@@ -63,7 +63,7 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
-      user.passwordHash
+      user.passwordHash,
     );
     if (!isPasswordValid) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
@@ -150,7 +150,7 @@ export class AuthService {
       if (!user) {
         throw new HttpException(
           'Invalid refresh token',
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
@@ -164,7 +164,7 @@ export class AuthService {
     } catch (e) {
       throw new HttpException(
         'Refresh token expired or invalid',
-        HttpStatus.UNAUTHORIZED
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }
@@ -179,7 +179,10 @@ export class AuthService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    const newPasswordHash: string = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    const newPasswordHash: string = await bcrypt.hash(
+      resetPasswordDto.newPassword,
+      10,
+    );
     await this.prismaService.user.update({
       where: { email: resetPasswordDto.email },
       data: { passwordHash: newPasswordHash },
@@ -199,7 +202,10 @@ export class AuthService {
     }
 
     if (user.verificationCode !== verifyEmailDto.verificationCode) {
-      throw new HttpException('Invalid verification code', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Invalid verification code',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     await this.prismaService.user.update({

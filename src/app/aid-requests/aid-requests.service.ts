@@ -8,7 +8,7 @@ import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 export class AidRequestsService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly firebaseAdminService: FirebaseAdminService
+    private readonly firebaseAdminService: FirebaseAdminService,
   ) {}
 
   async addComment(aidRequestId: number, content: string) {
@@ -26,7 +26,7 @@ export class AidRequestsService {
   async uploadDocument(
     aidRequestId: number,
     documentName: string,
-    documentUrl: string
+    documentUrl: string,
   ) {
     return this.prismaService.document.create({
       data: {
@@ -61,7 +61,7 @@ export class AidRequestsService {
 
     if (!aidRequest || aidRequest.userId !== userId) {
       throw new UnauthorizedException(
-        'You do not have access to this aid request'
+        'You do not have access to this aid request',
       );
     }
 
@@ -100,6 +100,8 @@ export class AidRequestsService {
         user: {
           connect: { id: userId },
         },
+        latitude: createAidRequestDto.latitude,
+        longitude: createAidRequestDto.longitude,
       },
     });
   }
@@ -108,11 +110,11 @@ export class AidRequestsService {
     id: number,
     status: string,
     userId: number,
-    userRole: string
+    userRole: string,
   ) {
     if (userRole !== 'admin') {
       throw new UnauthorizedException(
-        'Only admins can update the status of aid requests'
+        'Only admins can update the status of aid requests',
       );
     }
 
@@ -125,7 +127,7 @@ export class AidRequestsService {
     await this.firebaseAdminService.sendPushNotification(
       userId,
       'Aid Request Status Update',
-      message
+      message,
     );
 
     return updatedAidRequest;

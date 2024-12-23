@@ -8,7 +8,6 @@ export class MapService {
   async getAidRequests(latitude: number, longitude: number) {
     const aidRequests = await this.prismaService.aidRequest.findMany({
       where: {
-        latitude: latitude,
         longitude: longitude,
         isDeleted: false,
       },

@@ -8,9 +8,17 @@ export class ReportsService {
   async generateAidDistributionReport(startDate: string, endDate: string) {
     const aidRequests = await this.prisma.aidRequest.findMany({
       where: {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+        user: {
+          name: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        organization: {
+          name: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
         },
       },
       include: {
