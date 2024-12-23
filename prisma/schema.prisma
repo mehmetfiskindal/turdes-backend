@@ -64,7 +64,6 @@ model Organization {
   targetAudience  String
   volunteerNeeds  String
   activeProjects  String?
-  events          String?
   logo            String?
   establishedDate DateTime
   latitude        Float
@@ -135,7 +134,7 @@ model Donor {
   phone     String?  @db.VarChar(255)
   donations Donation[]
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 }
 
 model Donation {
