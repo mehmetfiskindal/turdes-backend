@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsString, IsNumber } from 'class-validator';
+
 export class CreateAidRequestDto {
   @ApiProperty()
   @IsString()
@@ -24,4 +25,12 @@ export class CreateAidRequestDto {
 
   @ApiProperty({ required: true, default: false })
   readonly isDeleted: boolean;
+
+  @ApiProperty()
+  @IsNumber()
+  readonly latitude: number;
+
+  @ApiProperty()
+  @IsNumber()
+  readonly longitude: number;
 }

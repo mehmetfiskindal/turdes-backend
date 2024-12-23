@@ -10,14 +10,14 @@ export class ReportsService {
       where: {
         user: {
           name: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: startDate,
+            lte: endDate,
           },
         },
         organization: {
           name: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: startDate,
+            lte: endDate,
           },
         },
       },
@@ -45,8 +45,8 @@ export class ReportsService {
     const donations = await this.prisma.donation.findMany({
       where: {
         createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: startDate,
+          lte: endDate,
         },
       },
       include: {
@@ -69,8 +69,8 @@ export class ReportsService {
     const volunteers = await this.prisma.volunteer.findMany({
       where: {
         createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: startDate,
+          lte: endDate,
         },
       },
     });
@@ -92,8 +92,8 @@ export class ReportsService {
     const donors = await this.prisma.donor.findMany({
       where: {
         createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: startDate,
+          lte: endDate,
         },
       },
     });

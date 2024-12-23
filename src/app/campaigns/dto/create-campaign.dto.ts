@@ -21,4 +21,8 @@ export class CreateCampaignDto {
   @ApiProperty()
   @IsNumber()
   readonly targetAmount: number;
+
+  @ApiProperty()
+  @IsNumber()
+  readonly organizationId: number;
 }

@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsEmail, IsDate } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsDate, IsNumber } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateOrganizationDto {
   @IsOptional()
@@ -84,4 +85,14 @@ export class UpdateOrganizationDto {
   @IsOptional()
   @IsDate()
   readonly establishedDate?: Date;
+
+  @IsOptional()
+  @IsNumber()
+  @ApiProperty()
+  readonly latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @ApiProperty()
+  readonly longitude?: number;
 }
