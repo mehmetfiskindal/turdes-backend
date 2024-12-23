@@ -56,4 +56,49 @@ export class ReportsService {
 
     return reportData;
   }
+
+  async generateVolunteerActivityReport(startDate: string, endDate: string) {
+    const volunteers = await this.prisma.volunteer.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      },
+    });
+
+    // Process the volunteers data to generate the report
+    const reportData = volunteers.map((volunteer) => ({
+      id: volunteer.id,
+      name: volunteer.name,
+      email: volunteer.email,
+      phone: volunteer.phone,
+      tasks: volunteer.tasks,
+      createdAt: volunteer.createdAt,
+    }));
+
+    return reportData;
+  }
+
+  async generateDonorActivityReport(startDate: string, endDate: string) {
+    const donors = await this.prisma.donor.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      },
+    });
+
+    // Process the donors data to generate the report
+    const reportData = donors.map((donor) => ({
+      id: donor.id,
+      name: donor.name,
+      email: donor.email,
+      phone: donor.phone,
+      createdAt: donor.createdAt,
+    }));
+
+    return reportData;
+  }
 }

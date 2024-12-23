@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { UploadTrainingDto } from './dto/upload-training.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class EducationService {
-  private readonly trainingMaterials = [];
+  constructor(private readonly prisma: PrismaService) {}
 
-  uploadTraining(uploadTrainingDto: UploadTrainingDto) {
-    const newTrainingMaterial = {
-      id: this.trainingMaterials.length + 1,
-      ...uploadTrainingDto,
-    };
-    this.trainingMaterials.push(newTrainingMaterial);
-    return newTrainingMaterial;
+  async uploadTraining(uploadTrainingDto: UploadTrainingDto) {
+    return this.prisma.trainingMaterial.create({
+      data: uploadTrainingDto,
+    });
   }
 
-  getAllTrainingMaterials() {
-    return this.trainingMaterials;
+  async getAllTrainingMaterials() {
+    return this.prisma.trainingMaterial.findMany();
   }
 }

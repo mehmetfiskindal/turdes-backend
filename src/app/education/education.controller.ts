@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
 import { EducationService } from './education.service';
 import { UploadTrainingDto } from './dto/upload-training.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,5 +21,17 @@ export class EducationController {
   @Post('upload')
   async uploadTraining(@Body() uploadTrainingDto: UploadTrainingDto) {
     return this.educationService.uploadTraining(uploadTrainingDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all training materials' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved all training materials.',
+  })
+  @Get('all')
+  async getAllTrainingMaterials() {
+    return this.educationService.getAllTrainingMaterials();
   }
 }
