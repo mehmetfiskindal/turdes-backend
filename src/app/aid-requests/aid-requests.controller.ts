@@ -91,53 +91,108 @@ export class AidRequestsController {
     return this.aidRequestsService.findOne(id, req.user.id, organizationId);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth()
-  // @Roles(Role.Admin)
-  // @CheckPolicies((ability) => ability.can(Action.Read, 'AidRequest'))
-  // @ApiOperation({ summary: 'Update the status of a specific aid request' })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Successfully updated the status of the aid request.',
-  // })
-  // @ApiResponse({ status: 404, description: 'Aid request not found' })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'The ID of the aid request to update',
-  // })
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       status: {
-  //         type: 'string',
-  //         description: 'The new status of the aid request',
-  //       },
-  //       deviceToken: {
-  //         type: 'string',
-  //         description: 'The device token of the user',
-  //       },
-  //     },
-  //   },
-  // })
-  // @Patch(':id/status')
-  // updateStatus(
-  //   @Param('id') id: string,
-  //   @Body('status') status: string,
-  //   @Body('deviceToken') deviceToken: string,
-  //   @Req() req: RequestWithUser
-  // ) {
-  //   const userId = req.user.id;
-  //   const userRole = req.user.role;
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Roles(Role.Admin)
+  @CheckPolicies((ability) => ability.can(Action.Update, 'AidRequest'))
+  @ApiOperation({ summary: 'Update the status of a specific aid request' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully updated the status of the aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to update',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          description: 'The new status of the aid request',
+        },
+      },
+    },
+  })
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id') id: number,
+    @Body('status') status: string,
+    @Req() req: RequestWithUser
+  ) {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    return this.aidRequestsService.updateStatus(id, status, userId, userRole);
+  }
 
-  //   return this.aidRequestsService.updateStatus(
-  //     +id,
-  //     status,
-  //     userId,
-  //     userRole,
-  //     deviceToken
-  //   );
-  // }
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add a comment to a specific aid request' })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully added comment to the aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to add comment',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        content: {
+          type: 'string',
+          description: 'The content of the comment',
+        },
+      },
+    },
+  })
+  @Post(':id/comments')
+  async addComment(
+    @Param('id') id: number,
+    @Body('content') content: string
+  ) {
+    return this.aidRequestsService.addComment(id, content);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload a document to a specific aid request' })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully uploaded document to the aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to upload document',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        documentName: {
+          type: 'string',
+          description: 'The name of the document',
+        },
+        documentUrl: {
+          type: 'string',
+          description: 'The URL of the document',
+        },
+      },
+    },
+  })
+  @Post(':id/documents')
+  async uploadDocument(
+    @Param('id') id: number,
+    @Body('documentName') documentName: string,
+    @Body('documentUrl') documentUrl: string
+  ) {
+    return this.aidRequestsService.uploadDocument(id, documentName, documentUrl);
+  }
 
   //delete methodu eklendi
   @UseGuards(JwtAuthGuard)

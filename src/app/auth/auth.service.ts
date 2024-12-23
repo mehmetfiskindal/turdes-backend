@@ -5,6 +5,8 @@ import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -165,5 +167,46 @@ export class AuthService {
         HttpStatus.UNAUTHORIZED
       );
     }
+  }
+
+  // Reset password method
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: { email: resetPasswordDto.email },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    const newPasswordHash: string = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    await this.prismaService.user.update({
+      where: { email: resetPasswordDto.email },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    return { message: 'Password reset successfully' };
+  }
+
+  // Verify email method
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: { email: verifyEmailDto.email },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (user.verificationCode !== verifyEmailDto.verificationCode) {
+      throw new HttpException('Invalid verification code', HttpStatus.BAD_REQUEST);
+    }
+
+    await this.prismaService.user.update({
+      where: { email: verifyEmailDto.email },
+      data: { isEmailVerified: true },
+    });
+
+    return { message: 'Email verified successfully' };
   }
 }
