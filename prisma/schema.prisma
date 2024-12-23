@@ -79,7 +79,7 @@ model Document {
   url          String     @db.VarChar(255)
   aidRequestId Int
   createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  updatedAt    DateTime   @default(now())
   aidRequest   AidRequest @relation(fields: [aidRequestId], references: [id])
 }
 
@@ -108,13 +108,14 @@ model Message {
 }
 
 model Volunteer {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(255)
-  email     String   @db.VarChar(255)
-  phone     String?  @db.VarChar(255)
-  tasks     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(255)
+  email          String           @db.VarChar(255)
+  phone          String?          @db.VarChar(255)
+  tasks          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  TaskAssignment TaskAssignment[]
 }
 
 model Donor {
@@ -210,4 +211,23 @@ model Address {
   latitude     Float
   longitude    Float
   Organization Organization[]
+}
+
+model TaskAssignment {
+  id          Int       @id @default(autoincrement())
+  volunteerId Int
+  taskId      Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
+  task        Task      @relation(fields: [taskId], references: [id])
+}
+
+model Task {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(255)
+  description    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  TaskAssignment TaskAssignment[]
 }

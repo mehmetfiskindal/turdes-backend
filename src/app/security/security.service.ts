@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { Express } from 'express';
+
+import { File as MulterFile } from 'multer';
 
 @Injectable()
 export class SecurityService {
@@ -13,7 +14,7 @@ export class SecurityService {
   ];
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
 
-  validateFile(file: Express.Multer.File): boolean {
+  validateFile(file: MulterFile): boolean {
     if (!this.allowedFileTypes.includes(file.mimetype)) {
       return false;
     }
@@ -32,10 +33,7 @@ export class SecurityService {
     return isFileSafe;
   }
 
-  async saveFile(
-    file: Express.Multer.File,
-    uploadDir: string,
-  ): Promise<string> {
+  async saveFile(file: MulterFile, uploadDir: string): Promise<string> {
     const fileHash = crypto
       .createHash('sha256')
       .update(file.buffer)
