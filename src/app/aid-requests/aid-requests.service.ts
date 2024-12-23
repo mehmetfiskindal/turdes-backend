@@ -100,8 +100,6 @@ export class AidRequestsService {
         user: {
           connect: { id: userId },
         },
-        latitude: createAidRequestDto.latitude,
-        longitude: createAidRequestDto.longitude,
       },
     });
   }

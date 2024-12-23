@@ -201,16 +201,9 @@ export class AuthService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    if (user.verificationCode !== verifyEmailDto.verificationCode) {
-      throw new HttpException(
-        'Invalid verification code',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     await this.prismaService.user.update({
       where: { email: verifyEmailDto.email },
-      data: { isEmailVerified: true },
+      data: {},
     });
 
     return { message: 'Email verified successfully' };
