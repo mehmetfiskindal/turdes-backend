@@ -35,7 +35,6 @@ export class ReportsService {
       status: request.status,
       user: request.user.name,
       organization: request.organization?.name,
-      createdAt: request.createdAt,
     }));
 
     return reportData;
