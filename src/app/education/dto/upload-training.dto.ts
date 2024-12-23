@@ -17,4 +17,8 @@ export class UploadTrainingDto {
   @ApiProperty({ example: 'video', description: 'Type of the training material (e.g., video, document)' })
   @IsString()
   type: string;
+
+  @ApiProperty({ example: 'http://example.com/training.mp4', description: 'URL of the training material' })
+  @IsUrl()
+  url: string;
 }
