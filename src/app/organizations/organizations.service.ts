@@ -8,9 +8,37 @@ import { CreateMessageDto } from './dto/create-message.dto';
 export class OrganizationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(createOrganizationDto: CreateOrganizationDto) {
+  async create(createOrganizationDto: CreateOrganizationDto) {
+    const contactInfo = await this.prisma.contactInfo.create({
+      data: {
+        phone: createOrganizationDto.phone,
+        email: createOrganizationDto.email,
+        contactName: createOrganizationDto.contactName,
+        contactPhone: createOrganizationDto.contactPhone,
+        contactEmail: createOrganizationDto.contactEmail,
+      },
+    });
+
+    const address = await this.prisma.address.create({
+      data: {
+        address: createOrganizationDto.address,
+        latitude: createOrganizationDto.latitude,
+        longitude: createOrganizationDto.longitude,
+      },
+    });
+
     return this.prisma.organization.create({
-      data: createOrganizationDto,
+      data: {
+        name: createOrganizationDto.name,
+        type: createOrganizationDto.type,
+        mission: createOrganizationDto.mission,
+        contactInfo: {
+          connect: { id: contactInfo.id },
+        },
+        address: {
+          connect: { id: address.id },
+        },
+      },
     });
   }
 
@@ -24,10 +52,52 @@ export class OrganizationService {
     });
   }
 
-  update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
+  async update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: Number(id) },
+      include: {
+        contactInfo: true,
+        address: true,
+      },
+    });
+
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+
+    const updatedContactInfo = await this.prisma.contactInfo.update({
+      where: { id: organization.contactInfoId },
+      data: {
+        phone: updateOrganizationDto.phone,
+        email: updateOrganizationDto.email,
+        contactName: updateOrganizationDto.contactName,
+        contactPhone: updateOrganizationDto.contactPhone,
+        contactEmail: updateOrganizationDto.contactEmail,
+      },
+    });
+
+    const updatedAddress = await this.prisma.address.update({
+      where: { id: organization.addressId },
+      data: {
+        address: updateOrganizationDto.address,
+        latitude: updateOrganizationDto.latitude,
+        longitude: updateOrganizationDto.longitude,
+      },
+    });
+
     return this.prisma.organization.update({
       where: { id: Number(id) },
-      data: updateOrganizationDto,
+      data: {
+        name: updateOrganizationDto.name,
+        type: updateOrganizationDto.type,
+        mission: updateOrganizationDto.mission,
+        contactInfo: {
+          connect: { id: updatedContactInfo.id },
+        },
+        address: {
+          connect: { id: updatedAddress.id },
+        },
+      },
     });
   }
 

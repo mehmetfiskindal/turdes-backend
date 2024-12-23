@@ -20,10 +20,7 @@ export class CreateAidRequestDto {
   readonly organizationId: number;
 
   @ApiProperty()
-  readonly latitude: number;
-
-  @ApiProperty()
-  readonly longitude: number;
+  readonly locationId: number;
 
   @ApiProperty({ required: true, default: false })
   readonly isDeleted: boolean;
