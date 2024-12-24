@@ -2,7 +2,13 @@ import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
 import { EducationService } from './education.service';
 import { UploadTrainingDto } from './dto/upload-training.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('education')
 @Controller('education')

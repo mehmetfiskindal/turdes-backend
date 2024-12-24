@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -23,7 +31,10 @@ export class CampaignsController {
   }
 
   @Patch(':id')
-  async updateCampaign(@Param('id') id: number, @Body() updateCampaignDto: CreateCampaignDto) {
+  async updateCampaign(
+    @Param('id') id: number,
+    @Body() updateCampaignDto: CreateCampaignDto,
+  ) {
     return this.campaignsService.updateCampaign(id, updateCampaignDto);
   }
 
@@ -33,7 +44,10 @@ export class CampaignsController {
   }
 
   @Post(':id/events')
-  async createEvent(@Param('id') id: number, @Body() createEventDto: CreateEventDto) {
+  async createEvent(
+    @Param('id') id: number,
+    @Body() createEventDto: CreateEventDto,
+  ) {
     return this.campaignsService.createEvent(id, createEventDto);
   }
 
@@ -43,17 +57,27 @@ export class CampaignsController {
   }
 
   @Get(':id/events/:eventId')
-  async findEventById(@Param('id') id: number, @Param('eventId') eventId: number) {
+  async findEventById(
+    @Param('id') id: number,
+    @Param('eventId') eventId: number,
+  ) {
     return this.campaignsService.findEventById(id, eventId);
   }
 
   @Patch(':id/events/:eventId')
-  async updateEvent(@Param('id') id: number, @Param('eventId') eventId: number, @Body() updateEventDto: CreateEventDto) {
+  async updateEvent(
+    @Param('id') id: number,
+    @Param('eventId') eventId: number,
+    @Body() updateEventDto: CreateEventDto,
+  ) {
     return this.campaignsService.updateEvent(id, eventId, updateEventDto);
   }
 
   @Delete(':id/events/:eventId')
-  async deleteEvent(@Param('id') id: number, @Param('eventId') eventId: number) {
+  async deleteEvent(
+    @Param('id') id: number,
+    @Param('eventId') eventId: number,
+  ) {
     return this.campaignsService.deleteEvent(id, eventId);
   }
 }
