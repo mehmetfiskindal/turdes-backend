@@ -59,7 +59,7 @@ describe('AuthService', () => {
           name: 'Test',
           phone: '1234567890',
           role: 'user',
-        })
+        }),
       ).rejects.toThrow(HttpException);
     });
 
@@ -96,7 +96,7 @@ describe('AuthService', () => {
     it('should throw an exception if user does not exist', async () => {
       jest.spyOn(prismaService.user, 'findUnique').mockResolvedValueOnce(null);
       await expect(
-        authService.login({ email: 'test@test.com', password: 'password' })
+        authService.login({ email: 'test@test.com', password: 'password' }),
       ).rejects.toThrow(HttpException);
     });
 
@@ -134,7 +134,7 @@ describe('AuthService', () => {
         throw new Error();
       });
       await expect(authService.refreshToken('invalid_token')).rejects.toThrow(
-        HttpException
+        HttpException,
       );
     });
 

@@ -25,9 +25,12 @@ export class ReportsController {
   @Get('aid-distribution')
   async generateAidDistributionReport(
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string
+    @Query('endDate') endDate: string,
   ) {
-    return this.reportsService.generateAidDistributionReport(startDate, endDate);
+    return this.reportsService.generateAidDistributionReport(
+      startDate,
+      endDate,
+    );
   }
 
   @ApiOperation({ summary: 'Generate donation distribution report' })
@@ -48,8 +51,11 @@ export class ReportsController {
   @Get('donation-distribution')
   async generateDonationDistributionReport(
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string
+    @Query('endDate') endDate: string,
   ) {
-    return this.reportsService.generateDonationDistributionReport(startDate, endDate);
+    return this.reportsService.generateDonationDistributionReport(
+      startDate,
+      endDate,
+    );
   }
 }
