@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../src/app/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -73,7 +73,7 @@ describe('AppController (e2e)', () => {
         locationId: 1,
         isDeleted: false,
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       })
       .expect(201);
   });
