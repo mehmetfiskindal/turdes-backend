@@ -42,7 +42,12 @@ describe('DonorsService', () => {
         phone: '1234567890',
         donationHistory: [],
       };
-      const result = { id: 1, ...createDonorDto, createdAt: new Date(), updatedAt: new Date() };
+      const result = {
+        id: 1,
+        ...createDonorDto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       jest.spyOn(prismaService.donor, 'create').mockResolvedValue(result);
 
       expect(await service.create(createDonorDto)).toBe(result);
@@ -51,7 +56,14 @@ describe('DonorsService', () => {
 
   describe('findOne', () => {
     it('should return a specific donor', async () => {
-      const result = { id: 1, name: 'John Doe', email: 'john.doe@example.com', phone: '1234567890', createdAt: new Date(), updatedAt: new Date() };
+      const result = {
+        id: 1,
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        phone: '1234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       jest.spyOn(prismaService.donor, 'findUnique').mockResolvedValue(result);
 
       expect(await service.findOne(1)).toBe(result);
@@ -60,7 +72,16 @@ describe('DonorsService', () => {
 
   describe('findDonations', () => {
     it('should return an array of donations for a specific donor', async () => {
-      const result = [{ id: 1, amount: 100, donorId: 1, createdAt: new Date(), updatedAt: new Date() }];
+      const result = [
+        {
+          id: 1,
+          amount: 100,
+          donorId: 1,
+          userId: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
       jest.spyOn(prismaService.donation, 'findMany').mockResolvedValue(result);
 
       expect(await service.findDonations(1)).toBe(result);
@@ -69,7 +90,17 @@ describe('DonorsService', () => {
 
   describe('findDonationHistory', () => {
     it('should return the donation history for a specific donor', async () => {
-      const result = [{ id: 1, amount: 100, donorId: 1, donor: { id: 1, name: 'John Doe' }, createdAt: new Date(), updatedAt: new Date() }];
+      const result = [
+        {
+          id: 1,
+          amount: 100,
+          donorId: 1,
+          userId: 1,
+          donor: { id: 1, name: 'John Doe' },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
       jest.spyOn(prismaService.donation, 'findMany').mockResolvedValue(result);
 
       expect(await service.findDonationHistory(1)).toBe(result);

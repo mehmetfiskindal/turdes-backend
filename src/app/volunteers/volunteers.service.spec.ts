@@ -42,7 +42,15 @@ describe('VolunteersService', () => {
         phone: '1234567890',
         skills: ['First Aid', 'Cooking'],
       };
-      const result = { id: 1, ...createVolunteerDto, createdAt: new Date(), updatedAt: new Date() };
+      const result = {
+        id: 1,
+        name: 'Test Volunteer',
+        email: 'test@volunteer.com',
+        phone: '1234567890',
+        tasks: 'Test Task',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       jest.spyOn(prismaService.volunteer, 'create').mockResolvedValue(result);
 
       expect(await service.register(createVolunteerDto)).toBe(result);
@@ -55,8 +63,15 @@ describe('VolunteersService', () => {
         volunteerId: 1,
         taskId: 1,
       };
-      const result = { id: 1, ...assignTaskDto, createdAt: new Date(), updatedAt: new Date() };
-      jest.spyOn(prismaService.taskAssignment, 'create').mockResolvedValue(result);
+      const result = {
+        id: 1,
+        ...assignTaskDto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      jest
+        .spyOn(prismaService.taskAssignment, 'create')
+        .mockResolvedValue(result);
 
       expect(await service.assignTask(assignTaskDto)).toBe(result);
     });

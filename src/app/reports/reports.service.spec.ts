@@ -40,7 +40,7 @@ describe('ReportsService', () => {
 
   describe('generateAidDistributionReport', () => {
     it('should generate aid distribution report', async () => {
-      const aidRequests = [
+      jest.spyOn(prismaService.aidRequest, 'findMany').mockResolvedValue([
         {
           id: 1,
           type: 'Food',
@@ -48,11 +48,13 @@ describe('ReportsService', () => {
           status: 'Pending',
           user: { name: 'User1' },
           organization: { name: 'Org1' },
-        },
-      ];
-      jest.spyOn(prismaService.aidRequest, 'findMany').mockResolvedValue(aidRequests);
+        } as any,
+      ]);
 
-      const result = await service.generateAidDistributionReport('2023-01-01', '2023-12-31');
+      const result = await service.generateAidDistributionReport(
+        '2023-01-01',
+        '2023-12-31',
+      );
       expect(result).toEqual([
         {
           id: 1,
@@ -68,17 +70,21 @@ describe('ReportsService', () => {
 
   describe('generateDonationDistributionReport', () => {
     it('should generate donation distribution report', async () => {
-      const donations = [
+      jest.spyOn(prismaService.donation, 'findMany').mockResolvedValue([
         {
           id: 1,
           amount: 100,
           donor: { name: 'Donor1' },
+          donorId: 1,
           createdAt: new Date('2023-01-01'),
-        },
-      ];
-      jest.spyOn(prismaService.donation, 'findMany').mockResolvedValue(donations);
+          updatedAt: new Date('2023-01-01'),
+        } as any,
+      ]);
 
-      const result = await service.generateDonationDistributionReport('2023-01-01', '2023-12-31');
+      const result = await service.generateDonationDistributionReport(
+        '2023-01-01',
+        '2023-12-31',
+      );
       expect(result).toEqual([
         {
           id: 1,
@@ -92,7 +98,7 @@ describe('ReportsService', () => {
 
   describe('generateVolunteerActivityReport', () => {
     it('should generate volunteer activity report', async () => {
-      const volunteers = [
+      jest.spyOn(prismaService.volunteer, 'findMany').mockResolvedValue([
         {
           id: 1,
           name: 'Volunteer1',
@@ -101,11 +107,13 @@ describe('ReportsService', () => {
           tasks: 'Task1',
           createdAt: new Date('2023-01-01'),
           updatedAt: new Date('2023-01-01'),
-        },
-      ];
-      jest.spyOn(prismaService.volunteer, 'findMany').mockResolvedValue(volunteers);
+        } as any,
+      ]);
 
-      const result = await service.generateVolunteerActivityReport('2023-01-01', '2023-12-31');
+      const result = await service.generateVolunteerActivityReport(
+        '2023-01-01',
+        '2023-12-31',
+      );
       expect(result).toEqual([
         {
           id: 1,
@@ -114,7 +122,6 @@ describe('ReportsService', () => {
           phone: '1234567890',
           tasks: 'Task1',
           createdAt: new Date('2023-01-01'),
-          updatedAt: new Date('2023-01-01'),
         },
       ]);
     });
@@ -122,7 +129,7 @@ describe('ReportsService', () => {
 
   describe('generateDonorActivityReport', () => {
     it('should generate donor activity report', async () => {
-      const donors = [
+      jest.spyOn(prismaService.donor, 'findMany').mockResolvedValue([
         {
           id: 1,
           name: 'Donor1',
@@ -130,11 +137,13 @@ describe('ReportsService', () => {
           phone: '1234567890',
           createdAt: new Date('2023-01-01'),
           updatedAt: new Date('2023-01-01'),
-        },
-      ];
-      jest.spyOn(prismaService.donor, 'findMany').mockResolvedValue(donors);
+        } as any,
+      ]);
 
-      const result = await service.generateDonorActivityReport('2023-01-01', '2023-12-31');
+      const result = await service.generateDonorActivityReport(
+        '2023-01-01',
+        '2023-12-31',
+      );
       expect(result).toEqual([
         {
           id: 1,
@@ -142,7 +151,6 @@ describe('ReportsService', () => {
           email: 'donor1@example.com',
           phone: '1234567890',
           createdAt: new Date('2023-01-01'),
-          updatedAt: new Date('2023-01-01'),
         },
       ]);
     });
