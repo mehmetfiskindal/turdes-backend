@@ -40,7 +40,7 @@ describe('EducationService', () => {
         type: 'video',
         url: 'http://example.com/training.mp4',
       };
-      const result = { id: 1, ...uploadTrainingDto };
+      const result = { id: 1, ...uploadTrainingDto, createdAt: new Date(), updatedAt: new Date() };
       jest.spyOn(prismaService.trainingMaterial, 'create').mockResolvedValue(result);
 
       expect(await service.uploadTraining(uploadTrainingDto)).toBe(result);
@@ -57,6 +57,8 @@ describe('EducationService', () => {
           fileUrl: 'http://example.com/training.mp4',
           type: 'video',
           url: 'http://example.com/training.mp4',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
       jest.spyOn(prismaService.trainingMaterial, 'findMany').mockResolvedValue(result);

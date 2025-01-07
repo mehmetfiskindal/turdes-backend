@@ -100,6 +100,7 @@ describe('ReportsService', () => {
           phone: '1234567890',
           tasks: 'Task1',
           createdAt: new Date('2023-01-01'),
+          updatedAt: new Date('2023-01-01'),
         },
       ];
       jest.spyOn(prismaService.volunteer, 'findMany').mockResolvedValue(volunteers);
@@ -113,6 +114,7 @@ describe('ReportsService', () => {
           phone: '1234567890',
           tasks: 'Task1',
           createdAt: new Date('2023-01-01'),
+          updatedAt: new Date('2023-01-01'),
         },
       ]);
     });
@@ -127,6 +129,7 @@ describe('ReportsService', () => {
           email: 'donor1@example.com',
           phone: '1234567890',
           createdAt: new Date('2023-01-01'),
+          updatedAt: new Date('2023-01-01'),
         },
       ];
       jest.spyOn(prismaService.donor, 'findMany').mockResolvedValue(donors);
@@ -139,6 +142,7 @@ describe('ReportsService', () => {
           email: 'donor1@example.com',
           phone: '1234567890',
           createdAt: new Date('2023-01-01'),
+          updatedAt: new Date('2023-01-01'),
         },
       ]);
     });

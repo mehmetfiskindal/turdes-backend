@@ -64,6 +64,7 @@ describe('OrganizationService', () => {
         volunteerNeeds: 'Volunteers needed',
         latitude: 40.7128,
         longitude: -74.0060,
+        establishedDate: new Date(),
       };
       const contactInfo = { id: 1 };
       const address = { id: 1 };
@@ -115,6 +116,7 @@ describe('OrganizationService', () => {
         volunteerNeeds: 'Volunteers needed',
         latitude: 40.7128,
         longitude: -74.0060,
+        establishedDate: new Date(),
       };
       const organization = { id: 1, ...updateOrganizationDto };
       const contactInfo = { id: 1 };

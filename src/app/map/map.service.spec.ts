@@ -32,7 +32,7 @@ describe('MapService', () => {
 
   describe('getAidRequests', () => {
     it('should return an array of aid requests', async () => {
-      const result = [{ id: 1, type: 'Food', description: 'Need food' }];
+      const result = [{ id: 1, type: 'Food', description: 'Need food', userId: 1, organizationId: 1, status: 'Pending', isDeleted: false, locationId: 1 }];
       jest.spyOn(prismaService.aidRequest, 'findMany').mockResolvedValue(result);
 
       expect(await service.getAidRequests(40.7128, -74.0060)).toBe(result);
