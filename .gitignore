@@ -55,4 +55,5 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 turdes-f2e8d-firebase-adminsdk-a5nlb-b7b43600f9.json
+turdes.json
 src/app/firebase/fcm/turdes-f2e8d-firebase-adminsdk-a5nlb-b7b43600f9.json

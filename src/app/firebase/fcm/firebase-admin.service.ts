@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { GoogleAuth } from 'google-auth-library';
-import * as serviceAccount from './turdes-f2e8d-firebase-adminsdk-a5nlb-b7b43600f9.json'; // Firebase'den indirdiğiniz JSON dosyası
+import * as serviceAccount from './turdes.json'; // Firebase'den indirdiğiniz JSON dosyası
 
 @Injectable()
 export class FirebaseAdminService {
