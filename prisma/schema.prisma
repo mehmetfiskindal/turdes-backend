@@ -49,6 +49,11 @@ model AidRequest {
   user           User          @relation(fields: [userId], references: [id])
   Comment        Comment[]
   Document       Document[]
+  qrCodeUrl      String?       @db.VarChar(255)
+  isUrgent       Boolean       @default(false)
+  recurring      Boolean       @default(false)
+  verified       Boolean       @default(false)
+  reported       Boolean       @default(false)
 }
 
 model Organization {
@@ -66,6 +71,8 @@ model Organization {
   messages      Message[]
   address       Address      @relation(fields: [addressId], references: [id])
   contactInfo   ContactInfo  @relation(fields: [contactInfoId], references: [id])
+  rating        Float?
+  feedback      String?
 }
 
 model Comment {
@@ -141,6 +148,7 @@ model Donation {
   updatedAt DateTime @updatedAt
   donor     Donor    @relation(fields: [donorId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+  anonymous Boolean  @default(false)
 }
 
 model Campaign {
@@ -235,5 +243,7 @@ model Task {
   description    String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+  latitude     Float
+  longitude    Float
   TaskAssignment TaskAssignment[]
 }

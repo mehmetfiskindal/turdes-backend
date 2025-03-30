@@ -95,4 +95,8 @@ export class UpdateOrganizationDto {
   @IsNumber()
   @ApiProperty()
   readonly longitude?: number;
+
+  @IsOptional()
+  @ApiProperty({ required: false, default: false })
+  readonly flagged?: boolean;
 }
