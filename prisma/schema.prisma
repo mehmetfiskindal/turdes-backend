@@ -243,5 +243,7 @@ model Task {
   description    String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+  latitude     Float
+  longitude    Float
   TaskAssignment TaskAssignment[]
 }

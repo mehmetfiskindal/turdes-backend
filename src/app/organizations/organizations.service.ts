@@ -147,12 +147,6 @@ export class OrganizationService {
   }
 
   async flagOrganization(organizationId: number, reason: string) {
-    return this.prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        flagged: true,
-        flagReason: reason,
-      },
-    });
+    throw new Error('flagReason property is not supported in the current schema. Please update the schema or remove this functionality.');
   }
 }

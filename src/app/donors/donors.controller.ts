@@ -22,12 +22,12 @@ export class DonorsController {
   }
 
   @Post(':id/anonymous-donation')
-  async createAnonymousDonation(@Param('id') id: number, @Body('amount') amount: number) {
-    return this.donorsService.createAnonymousDonation(id, amount);
+  async createAnonymousDonation(@Param('id') id: number, @Body('amount') amount: number, @Body('userId') userId: number) {
+    return this.donorsService.createAnonymousDonation(id, amount, userId);
   }
 
   @Post(':id/handle-anonymous-donations')
-  async handleAnonymousDonations(@Param('id') id: number, @Body('amount') amount: number) {
-    return this.donorsService.handleAnonymousDonations(id, amount);
+  async handleAnonymousDonations(@Param('id') id: number, @Body('amount') amount: number, @Body('userId') userId: number) {
+    return this.donorsService.handleAnonymousDonations(id, amount, userId);
   }
 }

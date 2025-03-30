@@ -31,21 +31,23 @@ export class DonorsService {
     });
   }
 
-  async createAnonymousDonation(donorId: number, amount: number) {
+  async createAnonymousDonation(donorId: number, amount: number, userId: number) {
     return this.prisma.donation.create({
       data: {
         amount,
         donor: { connect: { id: donorId } },
+        user: { connect: { id: userId } },
         anonymous: true,
       },
     });
   }
 
-  async handleAnonymousDonations(donorId: number, amount: number) {
+  async handleAnonymousDonations(donorId: number, amount: number, userId: number) {
     return this.prisma.donation.create({
       data: {
         amount,
         donor: { connect: { id: donorId } },
+        user: { connect: { id: userId } },
         anonymous: true,
       },
     });
