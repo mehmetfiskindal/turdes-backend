@@ -138,4 +138,53 @@ export class AidRequestsService {
       data: { isDeleted: true },
     });
   }
+
+  // Prioritize aid requests based on user categories
+  async prioritizeAidRequests() {
+    const aidRequests = await this.prismaService.aidRequest.findMany({
+      where: { isDeleted: false },
+      include: {
+        user: true,
+      },
+    });
+
+    // Custom sorting logic based on user categories
+    return aidRequests.sort((a, b) => {
+      const categoryPriority = {
+        ELDERLY: 1,
+        DISABLED: 2,
+        CHRONIC_ILLNESS: 3,
+        NONE: 4,
+      };
+
+      return (
+        categoryPriority[a.user.category] - categoryPriority[b.user.category]
+      );
+    });
+  }
+
+  // Calculate aid requests in a given area and highlight urgent ones
+  async getUrgentAidRequestsInArea(latitude: number, longitude: number, radius: number) {
+    const aidRequests = await this.prismaService.aidRequest.findMany({
+      where: {
+        isDeleted: false,
+        location: {
+          latitude: { gte: latitude - radius, lte: latitude + radius },
+          longitude: { gte: longitude - radius, lte: longitude + radius },
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const urgentRequests = aidRequests.filter((request) =>
+      ['elderly', 'disabled', 'chronic_illness'].includes(request.user.category),
+    );
+
+    return {
+      totalRequests: aidRequests.length,
+      urgentRequests,
+    };
+  }
 }
