@@ -1,55 +1,76 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateDonorDto } from './dto/create-donor.dto';
+import { CreateDonationDto } from './dto/create-donation.dto';
 
 @Injectable()
 export class DonorsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createDonorDto: CreateDonorDto) {
-    return this.prisma.donor.create({
-      data: createDonorDto,
-    });
-  }
+  async createDonation(createDonationDto: CreateDonationDto) {
+    const { amount, donorId, userId, anonymous = false } = createDonationDto;
 
-  async findOne(id: number) {
-    return this.prisma.donor.findUnique({
-      where: { id: Number(id) },
-    });
-  }
-
-  async findDonations(id: number) {
-    return this.prisma.donation.findMany({
-      where: { donorId: Number(id) },
-    });
-  }
-
-  async findDonationHistory(donorId: number) {
-    return this.prisma.donation.findMany({
-      where: { donorId: Number(donorId) },
-      include: { donor: true },
-    });
-  }
-
-  async createAnonymousDonation(donorId: number, amount: number, userId: number) {
     return this.prisma.donation.create({
       data: {
         amount,
-        donor: { connect: { id: donorId } },
-        user: { connect: { id: userId } },
-        anonymous: true,
+        donor: {
+          connect: { id: donorId },
+        },
+        user: {
+          connect: { id: userId },
+        },
+        anonymous,
       },
     });
   }
 
-  async handleAnonymousDonations(donorId: number, amount: number, userId: number) {
-    return this.prisma.donation.create({
-      data: {
-        amount,
-        donor: { connect: { id: donorId } },
-        user: { connect: { id: userId } },
-        anonymous: true,
+  async findAllDonations() {
+    return this.prisma.donation.findMany({
+      include: {
+        donor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
     });
+  }
+
+  async findAnonymousDonations() {
+    return this.prisma.donation.findMany({
+      where: { anonymous: true },
+      select: {
+        id: true,
+        amount: true,
+        createdAt: true,
+        userId: true,
+        // Exclude donor personal information
+        donor: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getDonationStatistics() {
+    const allDonations = await this.prisma.donation.findMany();
+    const anonymousDonations = await this.prisma.donation.findMany({
+      where: { anonymous: true },
+    });
+    
+    const totalAmount = allDonations.reduce((sum, donation) => sum + donation.amount, 0);
+    const anonymousAmount = anonymousDonations.reduce((sum, donation) => sum + donation.amount, 0);
+    
+    return {
+      totalDonations: allDonations.length,
+      anonymousDonations: anonymousDonations.length,
+      totalAmount,
+      anonymousAmount,
+      averageDonation: totalAmount / (allDonations.length || 1),
+    };
   }
 }

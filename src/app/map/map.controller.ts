@@ -1,31 +1,56 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { MapService } from './map.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('map')
 @Controller('map')
 export class MapController {
   constructor(private readonly mapService: MapService) {}
 
-  @ApiOperation({ summary: 'Get aid requests for a specific location' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Find aid centers near a location' })
   @ApiResponse({
     status: 200,
-    description: 'Successfully retrieved aid requests for the location.',
+    description: 'Successfully found aid centers near the specified location.',
   })
-  @ApiResponse({ status: 404, description: 'No aid requests found for the location' })
-  @ApiParam({
-    name: 'latitude',
-    description: 'The latitude of the location',
-  })
-  @ApiParam({
-    name: 'longitude',
-    description: 'The longitude of the location',
-  })
-  @Get(':latitude/:longitude')
-  async getAidRequests(
-    @Param('latitude') latitude: number,
-    @Param('longitude') longitude: number
+  @ApiQuery({ name: 'latitude', description: 'Latitude of the center point', type: 'number' })
+  @ApiQuery({ name: 'longitude', description: 'Longitude of the center point', type: 'number' })
+  @ApiQuery({ name: 'radiusKm', description: 'Search radius in kilometers', type: 'number' })
+  @Get('aid-centers')
+  async getAidCentersNearby(
+    @Query('latitude') latitude: number,
+    @Query('longitude') longitude: number,
+    @Query('radiusKm') radiusKm = 10, // Default 10km radius
   ) {
-    return this.mapService.getAidRequests(latitude, longitude);
+    return this.mapService.getAidCentersNearby(
+      parseFloat(latitude as any),
+      parseFloat(longitude as any),
+      parseFloat(radiusKm as any),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Find social support services near a location' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully found social support services near the specified location.',
+  })
+  @ApiQuery({ name: 'latitude', description: 'Latitude of the center point', type: 'number' })
+  @ApiQuery({ name: 'longitude', description: 'Longitude of the center point', type: 'number' })
+  @ApiQuery({ name: 'radiusKm', description: 'Search radius in kilometers', type: 'number' })
+  @Get('social-services')
+  async getSocialSupportServices(
+    @Query('latitude') latitude: number,
+    @Query('longitude') longitude: number,
+    @Query('radiusKm') radiusKm = 15, // Default 15km radius
+  ) {
+    return this.mapService.getSocialSupportServices(
+      parseFloat(latitude as any),
+      parseFloat(longitude as any),
+      parseFloat(radiusKm as any),
+    );
   }
 }

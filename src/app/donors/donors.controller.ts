@@ -1,33 +1,59 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
 import { DonorsService } from './donors.service';
-import { CreateDonorDto } from './dto/create-donor.dto';
+import { CreateDonationDto } from './dto/create-donation.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('donors')
 @Controller('donors')
 export class DonorsController {
   constructor(private readonly donorsService: DonorsService) {}
 
-  @Post()
-  async create(@Body() createDonorDto: CreateDonorDto) {
-    return this.donorsService.create(createDonorDto);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new donation' })
+  @ApiResponse({
+    status: 201,
+    description: 'The donation has been successfully created.',
+  })
+  @Post('donations')
+  async createDonation(@Body() createDonationDto: CreateDonationDto) {
+    return this.donorsService.createDonation(createDonationDto);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: number) {
-    return this.donorsService.findOne(id);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all donations' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved all donations.',
+  })
+  @Get('donations')
+  async findAllDonations() {
+    return this.donorsService.findAllDonations();
   }
 
-  @Get(':id/donations')
-  async findDonations(@Param('id') id: number) {
-    return this.donorsService.findDonations(id);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get anonymous donations' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved anonymous donations.',
+  })
+  @Get('donations/anonymous')
+  async findAnonymousDonations() {
+    return this.donorsService.findAnonymousDonations();
   }
 
-  @Post(':id/anonymous-donation')
-  async createAnonymousDonation(@Param('id') id: number, @Body('amount') amount: number, @Body('userId') userId: number) {
-    return this.donorsService.createAnonymousDonation(id, amount, userId);
-  }
-
-  @Post(':id/handle-anonymous-donations')
-  async handleAnonymousDonations(@Param('id') id: number, @Body('amount') amount: number, @Body('userId') userId: number) {
-    return this.donorsService.handleAnonymousDonations(id, amount, userId);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get donation statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved donation statistics.',
+  })
+  @Get('donations/statistics')
+  async getDonationStatistics() {
+    return this.donorsService.getDonationStatistics();
   }
 }

@@ -6,6 +6,7 @@ import {
   UseGuards,
   Patch,
   Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,6 +23,7 @@ import { OrganizationService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { OrganizationRatingDto } from './dto/organization-rating.dto';
 
 @ApiTags('organizations') // Grouping under "organizations" in Swagger documentation
 @Controller('organizations')
@@ -102,64 +104,43 @@ export class OrganizationsController {
     return this.organizationsService.sendMessage(id, messageDto);
   }
 
-  @ApiOperation({ summary: 'Add rating and feedback to an organization' })
-  @ApiResponse({
-    status: 200,
-    description: 'Rating and feedback added successfully.',
-  })
-  @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized access.' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        rating: {
-          type: 'number',
-          description: 'The rating of the organization',
-        },
-        feedback: {
-          type: 'string',
-          description: 'The feedback for the organization',
-        },
-      },
-    },
-  })
-  @ApiParam({ name: 'id', type: 'number' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Post(':id/rating-feedback')
-  async addRatingAndFeedback(
-    @Param('id') id: number,
-    @Body('rating') rating: number,
-    @Body('feedback') feedback: string,
+  @ApiOperation({ summary: 'Rate an organization and provide feedback' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully rated the organization.',
+  })
+  @Post(':id/ratings')
+  async rateOrganization(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() organizationRatingDto: OrganizationRatingDto,
   ) {
-    return this.organizationsService.addRatingAndFeedback(id, rating, feedback);
+    return this.organizationsService.rateOrganization(id, organizationRatingDto);
   }
 
-  @ApiOperation({ summary: 'Flag and report a suspicious or ineffective organization' })
-  @ApiResponse({
-    status: 200,
-    description: 'Organization flagged and reported successfully.',
-  })
-  @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized access.' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        reason: {
-          type: 'string',
-          description: 'The reason for flagging the organization',
-        },
-      },
-    },
-  })
-  @ApiParam({ name: 'id', type: 'number' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get ratings for an organization' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved organization ratings.',
+  })
+  @Get(':id/ratings')
+  async getOrganizationRatings(@Param('id', ParseIntPipe) id: number) {
+    return this.organizationsService.getOrganizationRatings(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Flag an organization for review' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully flagged the organization for review.',
+  })
   @Post(':id/flag')
   async flagOrganization(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body('reason') reason: string,
   ) {
     return this.organizationsService.flagOrganization(id, reason);

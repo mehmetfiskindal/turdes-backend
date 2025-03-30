@@ -25,6 +25,7 @@ import { Role } from '../roles/roles.enum';
 import { CheckPolicies } from '../casl/check-policies.decorator';
 import { Action } from '../casl/action';
 import { RequestWithUser } from './interfaces/request-with-user.interface';
+import { FilterAidRequestDto } from './dto/filter-aid-request.dto';
 
 @ApiTags('aidrequests')
 @Controller('aidrequests')
@@ -279,5 +280,25 @@ export class AidRequestsController {
   @Patch(':id/report')
   async reportSuspiciousAidRequest(@Param('id') id: number) {
     return this.aidRequestsService.reportSuspiciousAidRequest(id);
+  }
+
+  @Post('verify-delivery')
+  async verifyAidDelivery(@Body() body: { qrCodeData: string, status?: string }) {
+    return this.aidRequestsService.verifyAidDeliveryByQRCode(
+      body.qrCodeData,
+      body.status || 'Delivered'
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Search aid requests with filters' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved filtered aid requests.',
+  })
+  @Post('search')
+  async searchAidRequests(@Body() filterDto: FilterAidRequestDto) {
+    return this.aidRequestsService.searchAidRequests(filterDto);
   }
 }
