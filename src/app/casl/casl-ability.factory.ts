@@ -22,15 +22,21 @@ export class CaslAbilityFactory {
     >(PureAbility as AbilityClass<AppAbility>);
 
     if (user.role === 'admin') {
-      // Admin ise tüm nesnelerde tüm eylemleri gerçekleştirebilir
+      // Admin can perform all actions on all resources
       can(Action.Manage, 'all');
+    } else if (user.role === 'organization_owner') {
+      // Organization owners can manage their own resources
+      can(Action.Manage, ['AidRequest', 'Post']);
+      can(Action.Read, 'all');
+    } else if (user.role === 'volunteer') {
+      // Volunteers can read and update specific resources
+      can(Action.Read, ['AidRequest', 'Post']);
+      can(Action.Update, 'AidRequest', { assignedTo: user.id });
     } else {
-      // Diğer kullanıcılar sadece okuma iznine sahiptir
+      // Default permissions for other users
       can(Action.Read, ['User', 'Post', 'Comment', 'AidRequest']);
-
-      // Diğer kullanıcıların yapamayacağı işlemler
-      cannot(Action.Delete, ['User', 'Post', 'Comment', 'AidRequest']); // Silme yetkisi yok
-      cannot(Action.Update, 'AidRequest', { status: true }); // status alanını güncelleme yetkisi yok
+      cannot(Action.Delete, ['User', 'Post', 'Comment', 'AidRequest']);
+      cannot(Action.Update, 'AidRequest', { status: true });
     }
 
     return build({

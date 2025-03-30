@@ -28,4 +28,17 @@ export class UserDto {
     description: 'The role of the user',
   })
   readonly role!: string; // Definite assignment assertion
+
+  @ApiProperty({
+    example: false,
+    description: 'Indicates whether the user has verified their email',
+  })
+  readonly isEmailVerified!: boolean; // Definite assignment assertion
+
+  @ApiProperty({
+    example: 'unique-verification-token',
+    description: 'The token used for email verification',
+    required: false,
+  })
+  readonly verificationToken?: string;
 }

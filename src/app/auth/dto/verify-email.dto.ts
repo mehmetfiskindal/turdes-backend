@@ -10,9 +10,9 @@ export class VerifyEmailDto {
   readonly email: string;
 
   @ApiProperty({
-    example: '123456',
-    description: 'The verification code sent to the user',
+    example: 'unique-verification-token',
+    description: 'The token sent to the user for email verification',
   })
   @IsString()
-  readonly verificationCode: string;
+  readonly token: string;
 }

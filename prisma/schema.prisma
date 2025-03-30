@@ -8,60 +8,56 @@ datasource db {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  name          String         @db.VarChar(255)
-  email         String         @unique @db.VarChar(255)
-  phone         String?        @db.VarChar(255)
-  passwordHash  String         @db.VarChar(255)
-  role          String         @db.VarChar(255)
-  refreshToken  String?        @db.VarChar(255)
-  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
-  aidRequests   AidRequest[]
-  notifications Notification[]
-
+  id              Int            @id @default(autoincrement())
+  name            String         @db.VarChar(255)
+  email           String         @unique @db.VarChar(255)
+  phone           String?        @db.VarChar(255)
+  passwordHash    String         @db.VarChar(255)
+  role            String         @db.VarChar(255)
+  refreshToken    String?        @db.VarChar(255)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(6)
+  aidRequests     AidRequest[]
   donations       Donation[]
-  MessageSender   Message[]  @relation("MessageSender")
-  MessageReceiver Message[]  @relation("MessageReceiver")
+  MessageReceiver Message[]      @relation("MessageReceiver")
+  MessageSender   Message[]      @relation("MessageSender")
   Message         Message[]
+  notifications   Notification[]
+  isEmailVerified Boolean       @default(false)
+  verificationToken String?    @db.VarChar(255)
 }
 
 model AidRequest {
-  id Int @id @default(autoincrement())
-
-  userId Int
-
+  id             Int           @id @default(autoincrement())
+  type           String
+  description    String
+  status         String?
   organizationId Int?
-
-  type String
-
-  description String
-  status      String?
-  isDeleted   Boolean @default(false)
-  user        User    @relation(fields: [userId], references: [id])
-
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  Comment      Comment[]
-  Document     Document[]
-  location     Location      @relation(fields: [locationId], references: [id])
-  locationId   Int
+  userId         Int
+  locationId     Int
+  isDeleted      Boolean       @default(false)
+  location       Location      @relation(fields: [locationId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+  Comment        Comment[]
+  Document       Document[]
 }
 
 model Organization {
   id            Int          @id @default(autoincrement())
   name          String
-  type          String
-  mission       String
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  contactInfoId Int
+  addressId     Int
+  mission       String
+  type          String
   aidRequest    AidRequest[]
-  messages      Message[]
   campaigns     Campaign[]
   events        Event[]
-  contactInfo   ContactInfo  @relation(fields: [contactInfoId], references: [id])
-  contactInfoId Int
+  messages      Message[]
   address       Address      @relation(fields: [addressId], references: [id])
-  addressId     Int
+  contactInfo   ContactInfo  @relation(fields: [contactInfoId], references: [id])
 }
 
 model Comment {
@@ -87,9 +83,9 @@ model Notification {
   id        Int      @id @default(autoincrement())
   content   String   @db.VarChar(255)
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Message {
@@ -98,13 +94,13 @@ model Message {
   senderId       Int
   receiverId     Int
   organizationId Int?
-  sender         User          @relation("MessageSender", fields: [senderId], references: [id])
-  receiver       User          @relation("MessageReceiver", fields: [receiverId], references: [id])
-  organization   Organization? @relation(fields: [organizationId], references: [id])
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  User           User?         @relation(fields: [userId], references: [id])
   userId         Int?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  receiver       User          @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender         User          @relation("MessageSender", fields: [senderId], references: [id])
+  User           User?         @relation(fields: [userId], references: [id])
 }
 
 model Volunteer {
@@ -123,9 +119,9 @@ model Donor {
   name      String     @db.VarChar(255)
   email     String     @db.VarChar(255)
   phone     String?    @db.VarChar(255)
-  donations Donation[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now())
+  donations Donation[]
 }
 
 model Donation {
@@ -133,10 +129,10 @@ model Donation {
   amount    Float
   donorId   Int
   userId    Int
-  donor     Donor    @relation(fields: [donorId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  donor     Donor    @relation(fields: [donorId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Campaign {
@@ -144,12 +140,12 @@ model Campaign {
   name           String       @db.VarChar(255)
   description    String
   organizationId Int
-  endDate        DateTime
-  targetAmount   Float // Ensure targetAmount is defined
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  events         Event[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  endDate        DateTime
+  targetAmount   Float
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  events         Event[]
 }
 
 model Event {
@@ -160,10 +156,10 @@ model Event {
   location       String
   campaignId     Int
   organizationId Int
-  campaign       Campaign     @relation(fields: [campaignId], references: [id])
-  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  campaign       Campaign     @relation(fields: [campaignId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
 }
 
 model TrainingMaterial {
@@ -221,8 +217,8 @@ model TaskAssignment {
   taskId      Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
   task        Task      @relation(fields: [taskId], references: [id])
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
 }
 
 model Task {

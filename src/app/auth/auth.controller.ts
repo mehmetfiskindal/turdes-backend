@@ -70,4 +70,12 @@ export class AuthController {
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.verifyEmail(verifyEmailDto);
   }
+
+  @Post('resend-verification-email')
+  @ApiOperation({ summary: 'Resend verification email' })
+  @ApiResponse({ status: 200, description: 'Verification email resent successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid request.' })
+  async resendVerificationEmail(@Body('email') email: string) {
+    return this.authService.resendVerificationEmail(email);
+  }
 }

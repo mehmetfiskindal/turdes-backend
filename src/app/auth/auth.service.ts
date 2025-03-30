@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+import * as nodemailer from 'nodemailer';
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -15,6 +17,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
   // Register method
   async register(userDto: UserDto) {
     const existingUser = await this.prismaService.user.findUnique({
@@ -26,6 +36,8 @@ export class AuthService {
     }
 
     const passwordHash: string = await bcrypt.hash(userDto.password, 10);
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
     const user = await this.prismaService.user.create({
       data: {
         email: userDto.email,
@@ -33,15 +45,66 @@ export class AuthService {
         phone: userDto.phone,
         role: userDto.role,
         passwordHash: passwordHash,
+        isEmailVerified: false,
+        verificationToken: verificationToken,
       },
     });
 
-    const tokens = this.generateToken(user);
-    await this.prismaService.user.update({
-      where: { id: user.id },
-      data: { refreshToken: tokens.refresh_token },
+    await this.sendVerificationEmail(user.email, verificationToken);
+
+    return { message: 'User registered successfully. Please verify your email.' };
+  }
+
+  private async sendVerificationEmail(email: string, token: string) {
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+
+    await this.transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verify your email',
+      text: `Please verify your email by clicking on the following link: ${verificationUrl}`,
     });
-    return tokens;
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: { email: verifyEmailDto.email },
+    });
+
+    if (!user || user.verificationToken !== verifyEmailDto.token) {
+      throw new HttpException('Invalid or expired verification token', HttpStatus.BAD_REQUEST);
+    }
+
+    await this.prismaService.user.update({
+      where: { email: verifyEmailDto.email },
+      data: {
+        isEmailVerified: true,
+        verificationToken: null,
+      },
+    });
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || user.isEmailVerified) {
+      throw new HttpException('Invalid request', HttpStatus.BAD_REQUEST);
+    }
+
+    const newToken = crypto.randomBytes(32).toString('hex');
+
+    await this.prismaService.user.update({
+      where: { email },
+      data: { verificationToken: newToken },
+    });
+
+    await this.sendVerificationEmail(email, newToken);
+
+    return { message: 'Verification email resent successfully' };
   }
 
   // Login method
@@ -189,23 +252,5 @@ export class AuthService {
     });
 
     return { message: 'Password reset successfully' };
-  }
-
-  // Verify email method
-  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
-    const user = await this.prismaService.user.findUnique({
-      where: { email: verifyEmailDto.email },
-    });
-
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    await this.prismaService.user.update({
-      where: { email: verifyEmailDto.email },
-      data: {},
-    });
-
-    return { message: 'Email verified successfully' };
   }
 }
