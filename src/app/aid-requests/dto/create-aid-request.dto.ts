@@ -33,4 +33,7 @@ export class CreateAidRequestDto {
   @ApiProperty()
   @IsNumber()
   readonly longitude: number;
+
+  @ApiProperty({ required: false, default: false })
+  readonly recurring: boolean;
 }

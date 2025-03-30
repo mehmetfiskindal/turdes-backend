@@ -20,4 +20,14 @@ export class DonorsController {
   async findDonations(@Param('id') id: number) {
     return this.donorsService.findDonations(id);
   }
+
+  @Post(':id/anonymous-donation')
+  async createAnonymousDonation(@Param('id') id: number, @Body('amount') amount: number, @Body('userId') userId: number) {
+    return this.donorsService.createAnonymousDonation(id, amount, userId);
+  }
+
+  @Post(':id/handle-anonymous-donations')
+  async handleAnonymousDonations(@Param('id') id: number, @Body('amount') amount: number, @Body('userId') userId: number) {
+    return this.donorsService.handleAnonymousDonations(id, amount, userId);
+  }
 }

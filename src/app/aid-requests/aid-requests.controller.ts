@@ -61,7 +61,8 @@ export class AidRequestsController {
     @Req() req: RequestWithUser,
   ) {
     const userId = req.user.id;
-    return this.aidRequestsService.create(createAidRequestDto, userId);
+    const aidRequest = await this.aidRequestsService.create(createAidRequestDto, userId);
+    return { ...aidRequest, qrCodeUrl: aidRequest.qrCodeUrl };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -220,5 +221,63 @@ export class AidRequestsController {
   @Patch(':id/delete')
   async delete(@Param('id') id: number) {
     return this.aidRequestsService.delete(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Trigger aid requests based on extreme weather conditions' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully triggered aid requests based on weather conditions.',
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiParam({
+    name: 'latitude',
+    description: 'The latitude of the location',
+  })
+  @ApiParam({
+    name: 'longitude',
+    description: 'The longitude of the location',
+  })
+  @Post('trigger-weather/:latitude/:longitude')
+  async triggerAidRequestsBasedOnWeather(
+    @Param('latitude') latitude: number,
+    @Param('longitude') longitude: number,
+  ) {
+    return this.aidRequestsService.triggerAidRequestsBasedOnWeather(latitude, longitude);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify an aid request' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully verified the aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to verify',
+  })
+  @Patch(':id/verify')
+  async verifyAidRequest(@Param('id') id: number) {
+    return this.aidRequestsService.verifyAidRequest(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Report a suspicious aid request' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully reported the suspicious aid request.',
+  })
+  @ApiResponse({ status: 404, description: 'Aid request not found' })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the aid request to report',
+  })
+  @Patch(':id/report')
+  async reportSuspiciousAidRequest(@Param('id') id: number) {
+    return this.aidRequestsService.reportSuspiciousAidRequest(id);
   }
 }

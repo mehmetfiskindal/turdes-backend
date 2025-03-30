@@ -135,4 +135,18 @@ export class OrganizationService {
       },
     });
   }
+
+  async addRatingAndFeedback(organizationId: number, rating: number, feedback: string) {
+    return this.prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        rating,
+        feedback,
+      },
+    });
+  }
+
+  async flagOrganization(organizationId: number, reason: string) {
+    throw new Error('flagReason property is not supported in the current schema. Please update the schema or remove this functionality.');
+  }
 }
