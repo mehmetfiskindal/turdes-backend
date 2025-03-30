@@ -101,4 +101,67 @@ export class OrganizationsController {
   ) {
     return this.organizationsService.sendMessage(id, messageDto);
   }
+
+  @ApiOperation({ summary: 'Add rating and feedback to an organization' })
+  @ApiResponse({
+    status: 200,
+    description: 'Rating and feedback added successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized access.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        rating: {
+          type: 'number',
+          description: 'The rating of the organization',
+        },
+        feedback: {
+          type: 'string',
+          description: 'The feedback for the organization',
+        },
+      },
+    },
+  })
+  @ApiParam({ name: 'id', type: 'number' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/rating-feedback')
+  async addRatingAndFeedback(
+    @Param('id') id: number,
+    @Body('rating') rating: number,
+    @Body('feedback') feedback: string,
+  ) {
+    return this.organizationsService.addRatingAndFeedback(id, rating, feedback);
+  }
+
+  @ApiOperation({ summary: 'Flag and report a suspicious or ineffective organization' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organization flagged and reported successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized access.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        reason: {
+          type: 'string',
+          description: 'The reason for flagging the organization',
+        },
+      },
+    },
+  })
+  @ApiParam({ name: 'id', type: 'number' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/flag')
+  async flagOrganization(
+    @Param('id') id: number,
+    @Body('reason') reason: string,
+  ) {
+    return this.organizationsService.flagOrganization(id, reason);
+  }
 }

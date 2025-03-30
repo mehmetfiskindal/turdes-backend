@@ -30,4 +30,24 @@ export class DonorsService {
       include: { donor: true },
     });
   }
+
+  async createAnonymousDonation(donorId: number, amount: number) {
+    return this.prisma.donation.create({
+      data: {
+        amount,
+        donor: { connect: { id: donorId } },
+        anonymous: true,
+      },
+    });
+  }
+
+  async handleAnonymousDonations(donorId: number, amount: number) {
+    return this.prisma.donation.create({
+      data: {
+        amount,
+        donor: { connect: { id: donorId } },
+        anonymous: true,
+      },
+    });
+  }
 }

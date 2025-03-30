@@ -135,4 +135,24 @@ export class OrganizationService {
       },
     });
   }
+
+  async addRatingAndFeedback(organizationId: number, rating: number, feedback: string) {
+    return this.prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        rating,
+        feedback,
+      },
+    });
+  }
+
+  async flagOrganization(organizationId: number, reason: string) {
+    return this.prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        flagged: true,
+        flagReason: reason,
+      },
+    });
+  }
 }
