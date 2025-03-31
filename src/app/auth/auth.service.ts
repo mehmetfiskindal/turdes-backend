@@ -9,6 +9,7 @@ import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,8 @@ export class AuthService {
 
     const passwordHash: string = await bcrypt.hash(userDto.password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 30); // Token valid for 30 minutes
 
     const user = await this.prismaService.user.create({
       data: {
@@ -47,6 +50,7 @@ export class AuthService {
         passwordHash: passwordHash,
         isEmailVerified: false,
         verificationToken: verificationToken,
+        tokenExpiresAt: expiresAt, // Save expiration time
       },
     });
 
@@ -71,8 +75,11 @@ export class AuthService {
       where: { email: verifyEmailDto.email },
     });
 
-    if (!user || user.verificationToken !== verifyEmailDto.token) {
-      throw new HttpException('Invalid or expired verification token', HttpStatus.BAD_REQUEST);
+    if (!user || user.verificationToken !== verifyEmailDto.token || new Date() > user.tokenExpiresAt) {
+      if (new Date() > user.tokenExpiresAt) {
+        throw new HttpException('Verification token expired. Please request a new verification email.', HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('Invalid verification token', HttpStatus.BAD_REQUEST);
     }
 
     await this.prismaService.user.update({
@@ -83,9 +90,18 @@ export class AuthService {
       },
     });
 
+    // Send welcome email after successful verification
+    await this.transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: verifyEmailDto.email,
+      subject: 'Welcome to Our Platform!',
+      text: 'Your email has been successfully verified. Welcome to our platform!',
+    });
+
     return { message: 'Email verified successfully' };
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // Allow 3 requests per 5 minutes
   async resendVerificationEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
@@ -96,10 +112,12 @@ export class AuthService {
     }
 
     const newToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 30); // Token valid for 30 minutes
 
     await this.prismaService.user.update({
       where: { email },
-      data: { verificationToken: newToken },
+      data: { verificationToken: newToken, tokenExpiresAt: expiresAt },
     });
 
     await this.sendVerificationEmail(email, newToken);
@@ -130,6 +148,10 @@ export class AuthService {
     );
     if (!isPasswordValid) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (!user.isEmailVerified) {
+      throw new HttpException('Email not verified. Please verify your email or request a new verification email.', HttpStatus.UNAUTHORIZED);
     }
 
     const tokens = this.generateToken(user);

@@ -32,6 +32,7 @@ model User {
   notifications   Notification[]
   isEmailVerified Boolean       @default(false)
   verificationToken String?    @db.VarChar(255)
+  tokenExpiresAt   DateTime?      @db.Timestamptz(6)
   category        UserCategory    @default(NONE)
 }
 
