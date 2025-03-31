@@ -19,10 +19,12 @@ export class AuthService {
   ) {}
 
   private transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    host: process.env.MAIL_HOST,
+    port: parseInt(process.env.MAIL_PORT || '587'),
+    secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASSWORD,
     },
   });
 
@@ -60,13 +62,32 @@ export class AuthService {
   }
 
   private async sendVerificationEmail(email: string, token: string) {
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
     await this.transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.MAIL_FROM,
       to: email,
       subject: 'Verify your email',
-      text: `Please verify your email by clicking on the following link: ${verificationUrl}`,
+      text: `Please verify your email by clicking on the following link: ${verificationUrl}
+
+This link contains both your verification token and email address to complete the verification process automatically.
+
+If you need to enter these details manually:
+- Your verification token: ${token}
+- Your email: ${email}`,
+      html: `
+        <h2>Email Verification</h2>
+        <p>Please verify your email by clicking on the following link:</p>
+        <p><a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
+        <p>Or copy and paste this URL into your browser:</p>
+        <p>${verificationUrl}</p>
+        <p>This link contains both your verification token and email address to complete the verification process automatically.</p>
+        <p>If you need to enter these details manually:</p>
+        <ul>
+          <li><strong>Your verification token:</strong> ${token}</li>
+          <li><strong>Your email:</strong> ${email}</li>
+        </ul>
+      `
     });
   }
 
@@ -92,7 +113,7 @@ export class AuthService {
 
     // Send welcome email after successful verification
     await this.transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.MAIL_FROM,
       to: verifyEmailDto.email,
       subject: 'Welcome to Our Platform!',
       text: 'Your email has been successfully verified. Welcome to our platform!',
