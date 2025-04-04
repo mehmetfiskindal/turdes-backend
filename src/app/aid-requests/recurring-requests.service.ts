@@ -39,7 +39,7 @@ export class RecurringRequestsService {
     // Create the schedule in the database
     // In a real implementation, you would have a Schedule model
     // For this example, we'll use a generic JSON field in a notification
-    const scheduleNotification = await this.prisma.notification.create({
+    await this.prisma.notification.create({
       data: {
         content: JSON.stringify({
           type: 'RECURRING_SCHEDULE',

@@ -26,7 +26,7 @@ export class SecurityService {
     return true;
   }
 
-  async scanFile(filePath: string): Promise<boolean> {
+  async scanFile(_: string): Promise<boolean> {
     // Placeholder for actual antivirus scanning logic
     // For now, we'll just simulate a scan with a random result
     const isFileSafe = Math.random() > 0.1; // 90% chance the file is safe

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber } from 'class-validator';
 
 export class DonationHistoryDto {
   @ApiProperty()

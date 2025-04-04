@@ -229,36 +229,6 @@ export class AidRequestsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Trigger aid requests based on extreme weather conditions',
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Successfully triggered aid requests based on weather conditions.',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiParam({
-    name: 'latitude',
-    description: 'The latitude of the location',
-  })
-  @ApiParam({
-    name: 'longitude',
-    description: 'The longitude of the location',
-  })
-  @Post('trigger-weather/:latitude/:longitude')
-  async triggerAidRequestsBasedOnWeather(
-    @Param('latitude') latitude: number,
-    @Param('longitude') longitude: number,
-  ) {
-    return this.aidRequestsService.triggerAidRequestsBasedOnWeather(
-      latitude,
-      longitude,
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Verify an aid request' })
   @ApiResponse({
     status: 200,
