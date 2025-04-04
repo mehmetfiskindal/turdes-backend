@@ -107,15 +107,25 @@ export class OrganizationService {
     });
   }
 
-  sendMessage(id: number, createMessageDto: CreateMessageDto) {
+  sendMessage(createMessageDto: CreateMessageDto) {
     return this.prisma.message.create({
       data: {
         content: createMessageDto.content,
         organization: {
-          connect: { id: id },
+          connect: {
+            id: createMessageDto.organizationId, // Directly use the number type
+          },
         },
-        sender: { connect: { id: createMessageDto.senderId } }, // Ensure senderId exists in CreateMessageDto
-        receiver: { connect: { id: createMessageDto.receiverId } }, // Ensure receiverId exists in CreateMessageDto
+        sender: {
+          connect: {
+            id: createMessageDto.senderId,
+          },
+        },
+        receiver: {
+          connect: {
+            id: createMessageDto.receiverId,
+          },
+        },
       },
     });
   }

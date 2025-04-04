@@ -15,9 +15,11 @@ export class AidRequestsService {
   async addComment(aidRequestId: number, content: string) {
     return this.prismaService.comment.create({
       data: {
-        content,
+        content: content,
         aidRequest: {
-          connect: { id: aidRequestId },
+          connect: {
+            id: aidRequestId, // aidRequestId artık doğru türde kullanılıyor
+          },
         },
       },
     });
@@ -29,12 +31,16 @@ export class AidRequestsService {
     documentName: string,
     documentUrl: string,
   ) {
+    const numericId = parseInt(aidRequestId as unknown as string, 10); // aidRequestId'yi açıkça sayıya dönüştürüyoruz
+    if (isNaN(numericId)) {
+      throw new Error('Invalid aid request ID');
+    }
     return this.prismaService.document.create({
       data: {
         name: documentName,
         url: documentUrl,
         aidRequest: {
-          connect: { id: aidRequestId },
+          connect: { id: numericId },
         },
       },
     });

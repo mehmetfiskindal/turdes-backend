@@ -151,20 +151,13 @@ export class AidRequestsController {
     name: 'id',
     description: 'The ID of the aid request to add comment',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        content: {
-          type: 'string',
-          description: 'The content of the comment',
-        },
-      },
-    },
-  })
   @Post(':id/comments')
-  async addComment(@Param('id') id: number, @Body('content') content: string) {
-    return this.aidRequestsService.addComment(id, content);
+  async addComment(@Param('id') id: string, @Body('content') content: string) {
+    const numericId = parseInt(id, 10); // id'yi açıkça sayıya dönüştürüyoruz
+    if (isNaN(numericId)) {
+      throw new Error('Invalid aid request ID');
+    }
+    return this.aidRequestsService.addComment(numericId, content);
   }
 
   @UseGuards(JwtAuthGuard)

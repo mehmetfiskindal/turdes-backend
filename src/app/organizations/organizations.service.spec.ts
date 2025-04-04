@@ -229,21 +229,21 @@ describe('OrganizationService', () => {
         content: 'Hello, this is a test message',
         senderId: 1,
         receiverId: 2,
+        organizationId: 1, // Added organizationId to match the updated method signature
       };
       const message = {
         id: 1,
         content: 'Hello, this is a test message',
         senderId: 1,
         receiverId: 2,
+        organizationId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
-        userId: 1,
-        organizationId: 1,
       };
 
       jest.spyOn(prismaService.message, 'create').mockResolvedValue(message);
 
-      expect(await service.sendMessage(1, createMessageDto)).toBe(message);
+      expect(await service.sendMessage(createMessageDto)).toBe(message);
     });
   });
 });

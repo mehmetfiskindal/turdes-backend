@@ -4,13 +4,17 @@ import { IsString, IsInt } from 'class-validator';
 export class CreateMessageDto {
   @ApiProperty()
   @IsString()
-  readonly content: string;
+  content: string;
 
   @ApiProperty()
   @IsInt()
-  readonly senderId: number; // Add senderId property
+  senderId: number;
 
   @ApiProperty()
   @IsInt()
-  readonly receiverId: number; // Add receiverId property
+  receiverId: number;
+
+  @ApiProperty()
+  @IsInt()
+  organizationId: number;
 }

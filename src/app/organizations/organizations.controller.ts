@@ -99,9 +99,11 @@ export class OrganizationsController {
   @Post(':id/messages')
   async sendMessage(
     @Body() messageDto: CreateMessageDto,
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.organizationsService.sendMessage(id, messageDto);
+    // URL'deki id parametresini messageDto'ya atıyoruz
+    messageDto.organizationId = id;
+    return this.organizationsService.sendMessage(messageDto);
   }
 
   @UseGuards(JwtAuthGuard)
