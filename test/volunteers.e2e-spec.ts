@@ -23,7 +23,7 @@ describe('VolunteersController (e2e)', () => {
         skills: ['driving', 'first-aid'],
         availability: ['weekends', 'evenings'],
         locationId: 1,
-        userId: 1
+        userId: 1,
       })
       .expect(201)
       .expect((res) => {
@@ -41,7 +41,7 @@ describe('VolunteersController (e2e)', () => {
         volunteerId: 1,
         taskId: 1,
         startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 1 day later
+        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day later
       })
       .expect(200)
       .expect((res) => {

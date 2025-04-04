@@ -1,7 +1,13 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { HistoryService } from './history.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 
 @ApiTags('history')
 @Controller('history')
@@ -38,7 +44,9 @@ export class HistoryController {
     description: 'The ID of the organization to retrieve request history',
   })
   @Get('organization/:organizationId')
-  async getOrganizationRequestHistory(@Param('organizationId') organizationId: number) {
+  async getOrganizationRequestHistory(
+    @Param('organizationId') organizationId: number,
+  ) {
     return this.historyService.getOrganizationRequestHistory(organizationId);
   }
 }

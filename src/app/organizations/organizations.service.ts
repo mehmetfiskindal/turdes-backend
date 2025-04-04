@@ -136,7 +136,11 @@ export class OrganizationService {
     });
   }
 
-  async addRatingAndFeedback(organizationId: number, rating: number, feedback: string) {
+  async addRatingAndFeedback(
+    organizationId: number,
+    rating: number,
+    feedback: string,
+  ) {
     return this.prisma.organization.update({
       where: { id: organizationId },
       data: {
@@ -151,11 +155,11 @@ export class OrganizationService {
     const organization = await this.prisma.organization.findUnique({
       where: { id: organizationId },
     });
-    
+
     if (!organization) {
       throw new Error('Organization not found');
     }
-    
+
     // Create a notification for administrators about the flagged organization
     await this.prisma.notification.create({
       data: {
@@ -163,33 +167,33 @@ export class OrganizationService {
         userId: 1, // Assuming user ID 1 is an admin, replace with appropriate admin user ID
       },
     });
-    
-    // Since there's no flagged field in the schema, we can store this information 
+
+    // Since there's no flagged field in the schema, we can store this information
     // in feedback or create a proper flagging system in a future update
     return {
       success: true,
-      message: `Organization ${organization.name} has been flagged for review.`
+      message: `Organization ${organization.name} has been flagged for review.`,
     };
   }
 
   async rateOrganization(organizationId: number, ratingData: any) {
     const { rating, feedback, userId, anonymous = false } = ratingData;
-    
+
     // Validate rating is between 1-5
     if (rating < 1 || rating > 5) {
       throw new Error('Rating must be between 1 and 5');
     }
-    
+
     // Store the rating in a new table or in this case, update the organization
     // In a real application, you would store individual ratings in a separate table
     // to track who rated what and calculate averages
-    
+
     // Get current ratings to calculate new average
     const organization = await this.prisma.organization.findUnique({
       where: { id: organizationId },
       select: { rating: true },
     });
-    
+
     // Create a record of this specific rating
     // For now we'll simulate this since we don't have a ratings table
     await this.prisma.notification.create({
@@ -198,22 +202,24 @@ export class OrganizationService {
         userId: 1, // Admin user ID
       },
     });
-    
+
     // Update the organization with the new rating and feedback
     // In a real app, you would calculate the average of all ratings
     const updatedOrganization = await this.prisma.organization.update({
       where: { id: organizationId },
       data: {
-        rating: organization.rating ? (organization.rating + rating) / 2 : rating,
+        rating: organization.rating
+          ? (organization.rating + rating) / 2
+          : rating,
         // Append new feedback to existing feedback or initialize
-        feedback: (organization as any).feedback 
+        feedback: (organization as any).feedback
           ? `${(organization as any).feedback}\n---\n${anonymous ? 'Anonymous' : `User ${userId}`}: ${feedback}`
           : `${anonymous ? 'Anonymous' : `User ${userId}`}: ${feedback}`,
       },
     });
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: 'Rating submitted successfully',
       currentRating: updatedOrganization.rating,
     };
@@ -222,30 +228,31 @@ export class OrganizationService {
   async getOrganizationRatings(organizationId: number) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { 
+      select: {
         id: true,
         name: true,
         rating: true,
         feedback: true,
       },
     });
-    
+
     if (!organization) {
       throw new Error('Organization not found');
     }
-    
+
     // Parse feedback entries if they exist
-    const feedbackEntries = organization.feedback ? 
-      organization.feedback.split('\n---\n').map(entry => {
-        const [author, ...contentParts] = entry.split(': ');
-        const content = contentParts.join(': '); // Rejoin in case feedback itself contained colons
-        return {
-          author,
-          content,
-          isAnonymous: author === 'Anonymous'
-        };
-      }) : [];
-    
+    const feedbackEntries = organization.feedback
+      ? organization.feedback.split('\n---\n').map((entry) => {
+          const [author, ...contentParts] = entry.split(': ');
+          const content = contentParts.join(': '); // Rejoin in case feedback itself contained colons
+          return {
+            author,
+            content,
+            isAnonymous: author === 'Anonymous',
+          };
+        })
+      : [];
+
     return {
       id: organization.id,
       name: organization.name,

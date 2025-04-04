@@ -62,7 +62,10 @@ export class AidRequestsController {
     @Req() req: RequestWithUser,
   ) {
     const userId = req.user.id;
-    const aidRequest = await this.aidRequestsService.create(createAidRequestDto, userId);
+    const aidRequest = await this.aidRequestsService.create(
+      createAidRequestDto,
+      userId,
+    );
     return { ...aidRequest, qrCodeUrl: aidRequest.qrCodeUrl };
   }
 
@@ -226,10 +229,13 @@ export class AidRequestsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Trigger aid requests based on extreme weather conditions' })
+  @ApiOperation({
+    summary: 'Trigger aid requests based on extreme weather conditions',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Successfully triggered aid requests based on weather conditions.',
+    description:
+      'Successfully triggered aid requests based on weather conditions.',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiParam({
@@ -245,7 +251,10 @@ export class AidRequestsController {
     @Param('latitude') latitude: number,
     @Param('longitude') longitude: number,
   ) {
-    return this.aidRequestsService.triggerAidRequestsBasedOnWeather(latitude, longitude);
+    return this.aidRequestsService.triggerAidRequestsBasedOnWeather(
+      latitude,
+      longitude,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -283,10 +292,12 @@ export class AidRequestsController {
   }
 
   @Post('verify-delivery')
-  async verifyAidDelivery(@Body() body: { qrCodeData: string, status?: string }) {
+  async verifyAidDelivery(
+    @Body() body: { qrCodeData: string; status?: string },
+  ) {
     return this.aidRequestsService.verifyAidDeliveryByQRCode(
       body.qrCodeData,
-      body.status || 'Delivered'
+      body.status || 'Delivered',
     );
   }
 

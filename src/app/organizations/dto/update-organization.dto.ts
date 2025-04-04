@@ -1,4 +1,10 @@
-import { IsOptional, IsString, IsEmail, IsDate, IsNumber } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsEmail,
+  IsDate,
+  IsNumber,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateOrganizationDto {

@@ -23,7 +23,7 @@ describe('EducationController (e2e)', () => {
         url: 'https://example.com/video',
         thumbnailUrl: 'https://example.com/thumbnail.jpg',
         category: 'Aid Distribution',
-        tags: ['training', 'aid', 'distribution']
+        tags: ['training', 'aid', 'distribution'],
       })
       .expect(201)
       .expect((res) => {

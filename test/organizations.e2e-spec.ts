@@ -44,7 +44,7 @@ describe('OrganizationsController (e2e)', () => {
         phone: '1234567890',
         email: 'test@org.com',
         website: 'http://testorg.com',
-        logoUrl: 'http://testorg.com/logo.png'
+        logoUrl: 'http://testorg.com/logo.png',
       })
       .expect(201)
       .expect((res) => {
@@ -59,7 +59,7 @@ describe('OrganizationsController (e2e)', () => {
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
         name: 'Updated Organization',
-        description: 'Updated description'
+        description: 'Updated description',
       })
       .expect(200)
       .expect((res) => {
@@ -75,7 +75,7 @@ describe('OrganizationsController (e2e)', () => {
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
         content: 'Test message',
-        senderId: 1
+        senderId: 1,
       })
       .expect(201)
       .expect((res) => {
@@ -93,7 +93,7 @@ describe('OrganizationsController (e2e)', () => {
       .send({
         rating: 5,
         comment: 'Great organization!',
-        userId: 1
+        userId: 1,
       })
       .expect(200)
       .expect((res) => {
@@ -119,7 +119,7 @@ describe('OrganizationsController (e2e)', () => {
       .post('/organizations/1/flag')
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
-        reason: 'Suspicious activity'
+        reason: 'Suspicious activity',
       })
       .expect(200)
       .expect((res) => {

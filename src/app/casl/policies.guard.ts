@@ -8,21 +8,21 @@ import { PolicyHandler } from './policy-handler.interface';
 export class PoliciesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private caslAbilityFactory: CaslAbilityFactory
+    private caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const policyHandlers =
       this.reflector.get<PolicyHandler[]>(
         CHECK_POLICIES_KEY,
-        context.getHandler()
+        context.getHandler(),
       ) || [];
 
     const { user } = context.switchToHttp().getRequest();
     const ability = this.caslAbilityFactory.createForUser(user);
 
     return policyHandlers.every((handler) =>
-      this.execPolicyHandler(handler, ability)
+      this.execPolicyHandler(handler, ability),
     );
   }
 

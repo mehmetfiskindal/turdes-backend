@@ -40,8 +40,15 @@ describe('EducationService', () => {
         type: 'video',
         url: 'http://example.com/training.mp4',
       };
-      const result = { id: 1, ...uploadTrainingDto, createdAt: new Date(), updatedAt: new Date() };
-      jest.spyOn(prismaService.trainingMaterial, 'create').mockResolvedValue(result);
+      const result = {
+        id: 1,
+        ...uploadTrainingDto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      jest
+        .spyOn(prismaService.trainingMaterial, 'create')
+        .mockResolvedValue(result);
 
       expect(await service.uploadTraining(uploadTrainingDto)).toBe(result);
     });
@@ -61,7 +68,9 @@ describe('EducationService', () => {
           updatedAt: new Date(),
         },
       ];
-      jest.spyOn(prismaService.trainingMaterial, 'findMany').mockResolvedValue(result);
+      jest
+        .spyOn(prismaService.trainingMaterial, 'findMany')
+        .mockResolvedValue(result);
 
       expect(await service.getAllTrainingMaterials()).toBe(result);
     });

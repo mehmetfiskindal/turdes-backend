@@ -30,7 +30,7 @@ describe('RecurringRequestsController (e2e)', () => {
         frequency: 'WEEKLY',
         dayOfWeek: 1, // Pazartesi
         timeOfDay: '10:00',
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 gün sonra
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 gün sonra
       })
       .expect(201)
       .expect((res) => {

@@ -24,7 +24,9 @@ describe('MapController (e2e)', () => {
 
   it('/map/social-services (GET)', () => {
     return request(testHelper.getApp().getHttpServer())
-      .get('/map/social-services?latitude=40.7128&longitude=-74.006&radiusKm=15')
+      .get(
+        '/map/social-services?latitude=40.7128&longitude=-74.006&radiusKm=15',
+      )
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .expect(200)
       .expect((res) => {

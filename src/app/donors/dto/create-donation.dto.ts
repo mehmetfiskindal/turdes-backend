@@ -10,6 +10,10 @@ export class CreateDonationDto {
   @ApiProperty({ description: 'ID of the user receiving the donation' })
   userId: number;
 
-  @ApiProperty({ description: 'Whether the donation should be anonymous', required: false, default: false })
+  @ApiProperty({
+    description: 'Whether the donation should be anonymous',
+    required: false,
+    default: false,
+  })
   anonymous?: boolean;
 }

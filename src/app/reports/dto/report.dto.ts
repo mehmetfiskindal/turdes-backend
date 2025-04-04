@@ -6,11 +6,17 @@ export class ReportDto {
   @IsString()
   readonly type: string;
 
-  @ApiProperty({ example: '2023-01-01', description: 'The start date of the report' })
+  @ApiProperty({
+    example: '2023-01-01',
+    description: 'The start date of the report',
+  })
   @IsDate()
   readonly startDate: Date;
 
-  @ApiProperty({ example: '2023-12-31', description: 'The end date of the report' })
+  @ApiProperty({
+    example: '2023-12-31',
+    description: 'The end date of the report',
+  })
   @IsDate()
   readonly endDate: Date;
 

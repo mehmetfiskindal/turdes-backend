@@ -18,7 +18,13 @@ import { RoleGuard } from './role.guard';
     }),
     PrismaModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, ConfigService, RoleGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    ConfigService,
+    RoleGuard,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

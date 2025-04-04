@@ -52,21 +52,27 @@ try {
   const envTestPath = path.join(process.cwd(), '.env.test');
   if (fs.existsSync(envTestPath)) {
     let envContent = fs.readFileSync(envTestPath, 'utf8');
-    
+
     // Replace or add TEST_ACCESS_TOKEN
     if (envContent.includes('TEST_ACCESS_TOKEN=')) {
-      envContent = envContent.replace(/TEST_ACCESS_TOKEN=.*(\r?\n|$)/g, `TEST_ACCESS_TOKEN=${userToken}$1`);
+      envContent = envContent.replace(
+        /TEST_ACCESS_TOKEN=.*(\r?\n|$)/g,
+        `TEST_ACCESS_TOKEN=${userToken}$1`,
+      );
     } else {
       envContent += `\nTEST_ACCESS_TOKEN=${userToken}`;
     }
-    
+
     // Replace or add TEST_ADMIN_TOKEN
     if (envContent.includes('TEST_ADMIN_TOKEN=')) {
-      envContent = envContent.replace(/TEST_ADMIN_TOKEN=.*(\r?\n|$)/g, `TEST_ADMIN_TOKEN=${adminToken}$1`);
+      envContent = envContent.replace(
+        /TEST_ADMIN_TOKEN=.*(\r?\n|$)/g,
+        `TEST_ADMIN_TOKEN=${adminToken}$1`,
+      );
     } else {
       envContent += `\nTEST_ADMIN_TOKEN=${adminToken}`;
     }
-    
+
     fs.writeFileSync(envTestPath, envContent);
     console.log('\nUpdated .env.test file with new tokens');
   } else {

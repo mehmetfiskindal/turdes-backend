@@ -61,10 +61,16 @@ export class DonorsService {
     const anonymousDonations = await this.prisma.donation.findMany({
       where: { anonymous: true },
     });
-    
-    const totalAmount = allDonations.reduce((sum, donation) => sum + donation.amount, 0);
-    const anonymousAmount = anonymousDonations.reduce((sum, donation) => sum + donation.amount, 0);
-    
+
+    const totalAmount = allDonations.reduce(
+      (sum, donation) => sum + donation.amount,
+      0,
+    );
+    const anonymousAmount = anonymousDonations.reduce(
+      (sum, donation) => sum + donation.amount,
+      0,
+    );
+
     return {
       totalDonations: allDonations.length,
       anonymousDonations: anonymousDonations.length,

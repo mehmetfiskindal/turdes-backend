@@ -9,7 +9,7 @@ import { Action } from './action';
 export class AbilityGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private abilityFactory: CaslAbilityFactory
+    private abilityFactory: CaslAbilityFactory,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -19,7 +19,7 @@ export class AbilityGuard implements CanActivate {
     const ability = this.abilityFactory.createForUser(user);
     const requiredAbility = this.reflector.get<[Action, Subjects]>(
       'ability',
-      context.getHandler()
+      context.getHandler(),
     );
 
     if (!requiredAbility) {

@@ -24,7 +24,7 @@ describe('DonorsController (e2e)', () => {
         userId: 1,
         organizationId: 1,
         campaignId: null,
-        note: 'Test donation'
+        note: 'Test donation',
       })
       .expect(201)
       .expect((res) => {

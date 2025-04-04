@@ -16,11 +16,11 @@ export class FaqService {
   }
 
   findOne(id: number) {
-    return this.faqs.find(faq => faq.id === id);
+    return this.faqs.find((faq) => faq.id === id);
   }
 
   update(id: number, updateFaqDto: CreateFaqDto) {
-    const faqIndex = this.faqs.findIndex(faq => faq.id === id);
+    const faqIndex = this.faqs.findIndex((faq) => faq.id === id);
     if (faqIndex === -1) {
       return null;
     }
@@ -29,7 +29,7 @@ export class FaqService {
   }
 
   remove(id: number) {
-    const faqIndex = this.faqs.findIndex(faq => faq.id === id);
+    const faqIndex = this.faqs.findIndex((faq) => faq.id === id);
     if (faqIndex === -1) {
       return null;
     }

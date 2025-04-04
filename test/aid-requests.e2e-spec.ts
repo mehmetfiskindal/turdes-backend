@@ -130,7 +130,7 @@ describe('AidRequestsController (e2e)', () => {
       .post('/aidrequests/verify-delivery')
       .send({
         qrCodeData: 'aidRequest:1',
-        status: 'Delivered'
+        status: 'Delivered',
       })
       .expect(200)
       .expect((res) => {
@@ -148,7 +148,7 @@ describe('AidRequestsController (e2e)', () => {
         page: 1,
         limit: 10,
         sortBy: 'createdAt',
-        sortDirection: 'desc'
+        sortDirection: 'desc',
       })
       .expect(200)
       .expect((res) => {

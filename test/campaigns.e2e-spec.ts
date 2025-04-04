@@ -40,7 +40,7 @@ describe('CampaignsController (e2e)', () => {
         startDate: new Date().toISOString(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         targetAmount: 10000,
-        organizationId: 1
+        organizationId: 1,
       })
       .expect(201)
       .expect((res) => {
@@ -54,7 +54,7 @@ describe('CampaignsController (e2e)', () => {
       .patch('/campaigns/1')
       .send({
         name: 'Updated Campaign',
-        description: 'Updated campaign description'
+        description: 'Updated campaign description',
       })
       .expect(200)
       .expect((res) => {
@@ -73,10 +73,10 @@ describe('CampaignsController (e2e)', () => {
         startDate: new Date().toISOString(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         targetAmount: 5000,
-        organizationId: 1
+        organizationId: 1,
       })
       .expect(201)
-      .then(res => {
+      .then((res) => {
         const campaignId = res.body.id;
         return request(testHelper.getApp().getHttpServer())
           .delete(`/campaigns/${campaignId}`)
@@ -96,7 +96,7 @@ describe('CampaignsController (e2e)', () => {
         description: 'A Test Event',
         date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         location: 'Test Location',
-        organizationId: 1
+        organizationId: 1,
       })
       .expect(201)
       .expect((res) => {
@@ -130,13 +130,16 @@ describe('CampaignsController (e2e)', () => {
       .patch('/campaigns/1/events/1')
       .send({
         name: 'Updated Event',
-        description: 'Updated event description'
+        description: 'Updated event description',
       })
       .expect(200)
       .expect((res) => {
         expect(res.body).toHaveProperty('id');
         expect(res.body).toHaveProperty('name', 'Updated Event');
-        expect(res.body).toHaveProperty('description', 'Updated event description');
+        expect(res.body).toHaveProperty(
+          'description',
+          'Updated event description',
+        );
       });
   });
 
@@ -149,10 +152,10 @@ describe('CampaignsController (e2e)', () => {
         description: 'Will be deleted',
         date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         location: 'Temp Location',
-        organizationId: 1
+        organizationId: 1,
       })
       .expect(201)
-      .then(res => {
+      .then((res) => {
         const eventId = res.body.id;
         return request(testHelper.getApp().getHttpServer())
           .delete(`/campaigns/1/events/${eventId}`)

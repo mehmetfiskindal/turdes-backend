@@ -26,7 +26,9 @@ describe('ReportsController (e2e)', () => {
 
   it('/reports/donation-distribution (GET)', () => {
     return request(testHelper.getApp().getHttpServer())
-      .get('/reports/donation-distribution?startDate=2023-01-01&endDate=2023-12-31')
+      .get(
+        '/reports/donation-distribution?startDate=2023-01-01&endDate=2023-12-31',
+      )
       .expect(200)
       .expect((res) => {
         expect(res.body).toHaveProperty('byRegion');

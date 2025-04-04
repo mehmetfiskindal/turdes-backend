@@ -19,7 +19,7 @@ describe('RouteOptimizationController (e2e)', () => {
       .send({
         startLatitude: 40.7128,
         startLongitude: -74.006,
-        deliveryIds: [1, 2, 3]
+        deliveryIds: [1, 2, 3],
       })
       .expect(200)
       .expect((res) => {

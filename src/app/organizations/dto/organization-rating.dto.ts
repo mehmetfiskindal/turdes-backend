@@ -13,6 +13,10 @@ export class OrganizationRatingDto {
   @ApiProperty({ description: 'User ID providing the rating' })
   userId: number;
 
-  @ApiProperty({ description: 'Whether the rating should be anonymous', required: false, default: false })
+  @ApiProperty({
+    description: 'Whether the rating should be anonymous',
+    required: false,
+    default: false,
+  })
   anonymous?: boolean;
 }

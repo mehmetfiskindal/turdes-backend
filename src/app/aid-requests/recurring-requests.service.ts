@@ -62,7 +62,7 @@ export class RecurringRequestsService {
   private calculateNextOccurrence(schedule: any): Date {
     const now = new Date();
     let nextDate = new Date();
-    
+
     // Parse time components
     const [hours, minutes] = schedule.timeOfDay.split(':').map(Number);
 
@@ -100,7 +100,7 @@ export class RecurringRequestsService {
         // Set to the specified day of the month
         const monthlyTargetDay = Math.min(
           schedule.dayOfMonth || 1,
-          this.getDaysInMonth(nextDate.getFullYear(), nextDate.getMonth() + 1)
+          this.getDaysInMonth(nextDate.getFullYear(), nextDate.getMonth() + 1),
         );
         if (nextDate.getDate() > monthlyTargetDay) {
           // Move to next month
@@ -123,7 +123,7 @@ export class RecurringRequestsService {
   async processRecurringRequests() {
     try {
       console.log('Processing recurring aid requests');
-      
+
       // Find all active aid requests marked as recurring
       const recurringRequests = await this.prisma.aidRequest.findMany({
         where: {
@@ -143,10 +143,10 @@ export class RecurringRequestsService {
         const scheduleNotifications = await this.prisma.notification.findMany({
           where: {
             userId: request.userId,
-            content: { contains: `"aidRequestId":${request.id}` }
+            content: { contains: `"aidRequestId":${request.id}` },
           },
           orderBy: { createdAt: 'desc' },
-          take: 1
+          take: 1,
         });
 
         if (scheduleNotifications.length === 0) continue;
@@ -154,11 +154,11 @@ export class RecurringRequestsService {
         try {
           const scheduleData = JSON.parse(scheduleNotifications[0].content);
           const schedule = scheduleData.schedule;
-          
+
           // Calculate if today is a scheduled day
           const today = new Date();
           let isScheduledDay = false;
-          
+
           switch (schedule.frequency) {
             case 'DAILY':
               isScheduledDay = true;
@@ -168,8 +168,9 @@ export class RecurringRequestsService {
               break;
             case 'BIWEEKLY':
               // This is simplified - a real implementation would track actual dates
-              isScheduledDay = today.getDay() === schedule.dayOfWeek &&
-                              today.getDate() % 14 < 7;
+              isScheduledDay =
+                today.getDay() === schedule.dayOfWeek &&
+                today.getDate() % 14 < 7;
               break;
             case 'MONTHLY':
               isScheduledDay = today.getDate() === schedule.dayOfMonth;
@@ -182,9 +183,9 @@ export class RecurringRequestsService {
             await this.firebaseAdminService.sendPushNotification(
               request.userId.toString(),
               'Scheduled Aid Request Reminder',
-              `Your recurring aid request "${request.description}" is scheduled for today.`
+              `Your recurring aid request "${request.description}" is scheduled for today.`,
             );
-            
+
             // Send notification to the organization if assigned
             if (request.organizationId) {
               // In a real app, you'd have organization notification tokens
@@ -197,12 +198,13 @@ export class RecurringRequestsService {
               });
             }
           }
-          
         } catch (err) {
-          console.error(`Error processing schedule for request ${request.id}:`, err);
+          console.error(
+            `Error processing schedule for request ${request.id}:`,
+            err,
+          );
         }
       }
-      
     } catch (err) {
       console.error('Error in recurring requests scheduler:', err);
     }
@@ -221,41 +223,44 @@ export class RecurringRequestsService {
         location: true,
       },
     });
-    
+
     // For each request, get its schedule
     const enhancedRequests = [];
-    
+
     for (const request of requests) {
       // Find the schedule for this request
       const scheduleNotifications = await this.prisma.notification.findMany({
         where: {
           userId,
-          content: { contains: `"aidRequestId":${request.id}` }
+          content: { contains: `"aidRequestId":${request.id}` },
         },
         orderBy: { createdAt: 'desc' },
-        take: 1
+        take: 1,
       });
-      
+
       let schedule = null;
       let nextOccurrence = null;
-      
+
       if (scheduleNotifications.length > 0) {
         try {
           const scheduleData = JSON.parse(scheduleNotifications[0].content);
           schedule = scheduleData.schedule;
           nextOccurrence = this.calculateNextOccurrence(schedule);
         } catch (err) {
-          console.error(`Error parsing schedule for request ${request.id}:`, err);
+          console.error(
+            `Error parsing schedule for request ${request.id}:`,
+            err,
+          );
         }
       }
-      
+
       enhancedRequests.push({
         ...request,
         schedule,
         nextOccurrence,
       });
     }
-    
+
     return enhancedRequests;
   }
 }

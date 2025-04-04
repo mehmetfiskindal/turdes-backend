@@ -19,7 +19,10 @@ describe('FaqService', () => {
 
   describe('create', () => {
     it('should create a new FAQ', () => {
-      const createFaqDto: CreateFaqDto = { question: 'What is NestJS?', answer: 'A progressive Node.js framework.' };
+      const createFaqDto: CreateFaqDto = {
+        question: 'What is NestJS?',
+        answer: 'A progressive Node.js framework.',
+      };
       const result = service.create(createFaqDto);
       expect(result).toEqual({ id: expect.any(Number), ...createFaqDto });
     });
@@ -34,7 +37,10 @@ describe('FaqService', () => {
 
   describe('findOne', () => {
     it('should return a specific FAQ', () => {
-      const createFaqDto: CreateFaqDto = { question: 'What is NestJS?', answer: 'A progressive Node.js framework.' };
+      const createFaqDto: CreateFaqDto = {
+        question: 'What is NestJS?',
+        answer: 'A progressive Node.js framework.',
+      };
       const createdFaq = service.create(createFaqDto);
       const result = service.findOne(createdFaq.id);
       expect(result).toEqual(createdFaq);
@@ -43,9 +49,15 @@ describe('FaqService', () => {
 
   describe('update', () => {
     it('should update a specific FAQ', () => {
-      const createFaqDto: CreateFaqDto = { question: 'What is NestJS?', answer: 'A progressive Node.js framework.' };
+      const createFaqDto: CreateFaqDto = {
+        question: 'What is NestJS?',
+        answer: 'A progressive Node.js framework.',
+      };
       const createdFaq = service.create(createFaqDto);
-      const updateFaqDto: CreateFaqDto = { question: 'What is NestJS?', answer: 'A powerful Node.js framework.' };
+      const updateFaqDto: CreateFaqDto = {
+        question: 'What is NestJS?',
+        answer: 'A powerful Node.js framework.',
+      };
       const result = service.update(createdFaq.id, updateFaqDto);
       expect(result).toEqual({ id: createdFaq.id, ...updateFaqDto });
     });
@@ -53,7 +65,10 @@ describe('FaqService', () => {
 
   describe('remove', () => {
     it('should remove a specific FAQ', () => {
-      const createFaqDto: CreateFaqDto = { question: 'What is NestJS?', answer: 'A progressive Node.js framework.' };
+      const createFaqDto: CreateFaqDto = {
+        question: 'What is NestJS?',
+        answer: 'A progressive Node.js framework.',
+      };
       const createdFaq = service.create(createFaqDto);
       const result = service.remove(createdFaq.id);
       expect(result).toEqual(createdFaq);

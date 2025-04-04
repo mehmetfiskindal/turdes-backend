@@ -80,7 +80,7 @@ export class OrganizationsController {
   @Patch(':id')
   async update(
     @Body() organizationDto: UpdateOrganizationDto,
-    @Param('id') id: number
+    @Param('id') id: number,
   ) {
     return this.organizationsService.update(id, organizationDto);
   }
@@ -99,7 +99,7 @@ export class OrganizationsController {
   @Post(':id/messages')
   async sendMessage(
     @Body() messageDto: CreateMessageDto,
-    @Param('id') id: number
+    @Param('id') id: number,
   ) {
     return this.organizationsService.sendMessage(id, messageDto);
   }
@@ -116,7 +116,10 @@ export class OrganizationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() organizationRatingDto: OrganizationRatingDto,
   ) {
-    return this.organizationsService.rateOrganization(id, organizationRatingDto);
+    return this.organizationsService.rateOrganization(
+      id,
+      organizationRatingDto,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

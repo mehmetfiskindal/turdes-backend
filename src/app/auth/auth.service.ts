@@ -58,7 +58,9 @@ export class AuthService {
 
     await this.sendVerificationEmail(user.email, verificationToken);
 
-    return { message: 'User registered successfully. Please verify your email.' };
+    return {
+      message: 'User registered successfully. Please verify your email.',
+    };
   }
 
   private async sendVerificationEmail(email: string, token: string) {
@@ -87,7 +89,7 @@ If you need to enter these details manually:
           <li><strong>Your verification token:</strong> ${token}</li>
           <li><strong>Your email:</strong> ${email}</li>
         </ul>
-      `
+      `,
     });
   }
 
@@ -96,11 +98,21 @@ If you need to enter these details manually:
       where: { email: verifyEmailDto.email },
     });
 
-    if (!user || user.verificationToken !== verifyEmailDto.token || new Date() > user.tokenExpiresAt) {
+    if (
+      !user ||
+      user.verificationToken !== verifyEmailDto.token ||
+      new Date() > user.tokenExpiresAt
+    ) {
       if (new Date() > user.tokenExpiresAt) {
-        throw new HttpException('Verification token expired. Please request a new verification email.', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Verification token expired. Please request a new verification email.',
+          HttpStatus.BAD_REQUEST,
+        );
       }
-      throw new HttpException('Invalid verification token', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Invalid verification token',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     await this.prismaService.user.update({
@@ -172,7 +184,10 @@ If you need to enter these details manually:
     }
 
     if (!user.isEmailVerified) {
-      throw new HttpException('Email not verified. Please verify your email or request a new verification email.', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Email not verified. Please verify your email or request a new verification email.',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const tokens = this.generateToken(user);

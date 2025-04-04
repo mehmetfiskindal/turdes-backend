@@ -5,29 +5,6 @@ import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 import * as QRCode from 'qrcode';
 
-// Define the interface for AidRequest with distance
-interface AidRequestWithDistance extends AidRequest {
-  distanceKm: number;
-  user: any;
-  location: {
-    id: number;
-    latitude: number;
-    longitude: number;
-  };
-  organization: {
-    id: number;
-    createdAt: Date;
-    updatedAt: Date;
-    type: string;
-    name: string;
-    contactInfoId: number;
-    addressId: number;
-    mission: string;
-    rating: number;
-    feedback: string;
-  };
-}
-
 @Injectable()
 export class AidRequestsService {
   constructor(
@@ -197,7 +174,12 @@ export class AidRequestsService {
   }
 
   // Calculate aid requests in a given area and highlight urgent ones
-  async getUrgentAidRequestsInArea(latitude: number, longitude: number, radius: number, shouldNotify: boolean = false) {
+  async getUrgentAidRequestsInArea(
+    latitude: number,
+    longitude: number,
+    radius: number,
+    shouldNotify: boolean = false,
+  ) {
     const aidRequests = await this.prismaService.aidRequest.findMany({
       where: {
         isDeleted: false,
@@ -212,13 +194,22 @@ export class AidRequestsService {
       },
     });
 
-    const urgentRequests = aidRequests.filter((request) =>
-      request.isUrgent || ['ELDERLY', 'DISABLED', 'CHRONIC_ILLNESS'].includes(request.user.category)
+    const urgentRequests = aidRequests.filter(
+      (request) =>
+        request.isUrgent ||
+        ['ELDERLY', 'DISABLED', 'CHRONIC_ILLNESS'].includes(
+          request.user.category,
+        ),
     );
 
     // If notification is requested, find nearby users and notify them about urgent requests
     if (shouldNotify && urgentRequests.length > 0) {
-      await this.notifyNearbyUsersAboutUrgentRequests(latitude, longitude, radius, urgentRequests);
+      await this.notifyNearbyUsersAboutUrgentRequests(
+        latitude,
+        longitude,
+        radius,
+        urgentRequests,
+      );
     }
 
     return {
@@ -227,24 +218,29 @@ export class AidRequestsService {
     };
   }
 
-  private async notifyNearbyUsersAboutUrgentRequests(latitude: number, longitude: number, radius: number, urgentRequests: any[]) {
+  private async notifyNearbyUsersAboutUrgentRequests(
+    latitude: number,
+    longitude: number,
+    radius: number,
+    urgentRequests: any[],
+  ) {
     // Find users within the given radius
     // Here we'd usually use some sort of geospatial query
     // For simplicity, we'll assume we have a way to get users in an area
     const nearbyUsers = await this.findUsersInArea(latitude, longitude, radius);
-    
+
     // For each nearby user, send notifications about urgent requests
     for (const user of nearbyUsers) {
       for (const request of urgentRequests) {
         const distance = this.calculateDistance(
-          latitude, 
-          longitude, 
-          request.location.latitude, 
-          request.location.longitude
+          latitude,
+          longitude,
+          request.location.latitude,
+          request.location.longitude,
         );
-        
+
         const message = `Urgent aid needed ${distance.toFixed(1)}km away: ${request.description}`;
-        
+
         await this.firebaseAdminService.sendPushNotification(
           user.id.toString(),
           'Urgent Aid Needed Nearby',
@@ -254,29 +250,40 @@ export class AidRequestsService {
     }
   }
 
-  private async findUsersInArea(latitude: number, longitude: number, radius: number) {
+  private async findUsersInArea(
+    latitude: number,
+    longitude: number,
+    radius: number,
+  ) {
     // This is a simplified implementation
     // In a real application, you would need a more sophisticated geospatial query
     const users = await this.prismaService.user.findMany({
       where: {
         // In a real application, you'd use geospatial queries from your database
         // For now, we'll just return all users with role = "volunteer"
-        role: "volunteer",
+        role: 'volunteer',
       },
     });
-    
+
     return users;
   }
 
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
     // Haversine formula to calculate distance between two points on Earth
     const R = 6371; // Earth's radius in km
     const dLat = this.deg2rad(lat2 - lat1);
     const dLon = this.deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; // Distance in km
     return distance;
@@ -315,30 +322,33 @@ export class AidRequestsService {
     });
   }
 
-  async verifyAidDeliveryByQRCode(qrCodeData: string, newStatus: string = 'Delivered') {
+  async verifyAidDeliveryByQRCode(
+    qrCodeData: string,
+    newStatus: string = 'Delivered',
+  ) {
     // Extract aid request ID from QR code data
     const aidRequestId = parseInt(qrCodeData.replace('aidRequest:', ''));
-    
+
     if (isNaN(aidRequestId)) {
       throw new Error('Invalid QR code data');
     }
-    
+
     // Verify aid request exists
     const aidRequest = await this.prismaService.aidRequest.findUnique({
       where: { id: aidRequestId },
       include: { user: true },
     });
-    
+
     if (!aidRequest) {
       throw new Error('Aid request not found');
     }
-    
+
     // Update the aid request status
     const updatedAidRequest = await this.prismaService.aidRequest.update({
       where: { id: aidRequestId },
       data: { status: newStatus },
     });
-    
+
     // Send notification to the user
     const message = `Your aid request (ID: ${aidRequestId}) has been ${newStatus.toLowerCase()}`;
     await this.firebaseAdminService.sendPushNotification(
@@ -346,7 +356,7 @@ export class AidRequestsService {
       'Aid Delivery Update',
       message,
     );
-    
+
     return updatedAidRequest;
   }
 
@@ -365,14 +375,14 @@ export class AidRequestsService {
 
       // Find users in the affected area
       const usersInArea = await this.findUsersInArea(latitude, longitude, 10); // 10km radius
-      
+
       // Create system-generated aid requests for each user in the area with vulnerable categories
-      const vulnerableUsers = usersInArea.filter(user => 
-        ['ELDERLY', 'DISABLED', 'CHRONIC_ILLNESS'].includes(user.category)
+      const vulnerableUsers = usersInArea.filter((user) =>
+        ['ELDERLY', 'DISABLED', 'CHRONIC_ILLNESS'].includes(user.category),
       );
-      
+
       const createdRequests = [];
-      
+
       for (const user of vulnerableUsers) {
         const aidRequest = await this.prismaService.aidRequest.create({
           data: {
@@ -388,32 +398,32 @@ export class AidRequestsService {
             },
           },
         });
-        
+
         const qrCodeUrl = await QRCode.toDataURL(`aidRequest:${aidRequest.id}`);
         await this.prismaService.aidRequest.update({
           where: { id: aidRequest.id },
           data: { qrCodeUrl },
         });
-        
+
         await this.firebaseAdminService.sendPushNotification(
           user.id.toString(),
           'Weather Alert: Aid Request Created',
           `Due to extreme weather (${weatherData.alertType}), an urgent aid request has been automatically created for you.`,
         );
-        
-        createdRequests.push({...aidRequest, qrCodeUrl});
+
+        createdRequests.push({ ...aidRequest, qrCodeUrl });
       }
-      
+
       // Create a single notification for administrators and relief organizations
       await this.notifyOrganizationsOfWeatherEmergency(weatherData, location);
-      
+
       return {
         weatherAlert: weatherData,
         affectedUserCount: vulnerableUsers.length,
         createdRequests,
       };
     }
-    
+
     return {
       weatherAlert: weatherData,
       affectedUserCount: 0,
@@ -425,57 +435,62 @@ export class AidRequestsService {
     try {
       // In a real implementation, you would call an external weather API
       // For example, OpenWeatherMap, WeatherAPI, or a national weather service API
-      
+
       // This is a mock implementation for demonstration purposes
       // In a real application, replace this with actual API calls
-      
+
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Randomly determine if there's an extreme weather condition (for demonstration)
       const isExtreme = Math.random() > 0.7;
-      
+
       if (isExtreme) {
         const possibleAlerts = [
-          { 
-            alertType: 'Severe Storm Warning', 
-            description: 'Heavy rainfall and strong winds expected. Potential for flooding and property damage.',
-            severity: 'high' 
+          {
+            alertType: 'Severe Storm Warning',
+            description:
+              'Heavy rainfall and strong winds expected. Potential for flooding and property damage.',
+            severity: 'high',
           },
-          { 
-            alertType: 'Extreme Heat Warning', 
-            description: 'Dangerous heat conditions with temperatures exceeding 40°C. Increased risk for heat-related illnesses.',
-            severity: 'high' 
+          {
+            alertType: 'Extreme Heat Warning',
+            description:
+              'Dangerous heat conditions with temperatures exceeding 40°C. Increased risk for heat-related illnesses.',
+            severity: 'high',
           },
-          { 
-            alertType: 'Earthquake Aftershock Alert', 
-            description: 'Multiple aftershocks expected following the recent seismic activity.',
-            severity: 'high' 
+          {
+            alertType: 'Earthquake Aftershock Alert',
+            description:
+              'Multiple aftershocks expected following the recent seismic activity.',
+            severity: 'high',
           },
-          { 
-            alertType: 'Flood Warning', 
-            description: 'Rising water levels in nearby rivers. Potential for residential flooding.',
-            severity: 'medium' 
-          }
+          {
+            alertType: 'Flood Warning',
+            description:
+              'Rising water levels in nearby rivers. Potential for residential flooding.',
+            severity: 'medium',
+          },
         ];
-        
-        const selectedAlert = possibleAlerts[Math.floor(Math.random() * possibleAlerts.length)];
-        
+
+        const selectedAlert =
+          possibleAlerts[Math.floor(Math.random() * possibleAlerts.length)];
+
         return {
           isExtreme,
           ...selectedAlert,
           timestamp: new Date().toISOString(),
-          coordinates: { latitude, longitude }
+          coordinates: { latitude, longitude },
         };
       }
-      
+
       return {
         isExtreme,
         alertType: 'Normal',
         description: 'No extreme weather conditions detected.',
         severity: 'low',
         timestamp: new Date().toISOString(),
-        coordinates: { latitude, longitude }
+        coordinates: { latitude, longitude },
       };
     } catch (error) {
       console.error('Error fetching weather data:', error);
@@ -487,24 +502,28 @@ export class AidRequestsService {
         severity: 'unknown',
         timestamp: new Date().toISOString(),
         coordinates: { latitude, longitude },
-        error: error.message
+        error: error.message,
       };
     }
   }
-  
-  private async notifyOrganizationsOfWeatherEmergency(weatherData: any, location: any) {
+
+  private async notifyOrganizationsOfWeatherEmergency(
+    weatherData: any,
+    location: any,
+  ) {
     // Find organizations that can help with emergency responses
-    const emergencyOrganizations = await this.prismaService.organization.findMany({
-      where: {
-        type: {
-          in: ['EMERGENCY', 'DISASTER_RELIEF', 'MEDICAL', 'SHELTER']
-        }
-      },
-      include: {
-        contactInfo: true
-      }
-    });
-    
+    const emergencyOrganizations =
+      await this.prismaService.organization.findMany({
+        where: {
+          type: {
+            in: ['EMERGENCY', 'DISASTER_RELIEF', 'MEDICAL', 'SHELTER'],
+          },
+        },
+        include: {
+          contactInfo: true,
+        },
+      });
+
     // Create a notification for admin users
     await this.prismaService.notification.create({
       data: {
@@ -512,7 +531,7 @@ export class AidRequestsService {
         userId: 1, // Assuming user ID 1 is an admin, replace with appropriate admin user ID
       },
     });
-    
+
     // In a real implementation, you would notify the organizations
     // This could involve emails, SMS, push notifications, etc.
     return emergencyOrganizations;
@@ -589,13 +608,19 @@ export class AidRequestsService {
     if (latitude && longitude) {
       locationFilter = {
         location: {
-          latitude: { 
-            gte: parseFloat(latitude as any) - (radiusKm / 111),
-            lte: parseFloat(latitude as any) + (radiusKm / 111),
+          latitude: {
+            gte: parseFloat(latitude as any) - radiusKm / 111,
+            lte: parseFloat(latitude as any) + radiusKm / 111,
           },
           longitude: {
-            gte: parseFloat(longitude as any) - (radiusKm / (111 * Math.cos(parseFloat(latitude as any) * Math.PI / 180))),
-            lte: parseFloat(longitude as any) + (radiusKm / (111 * Math.cos(parseFloat(latitude as any) * Math.PI / 180))),
+            gte:
+              parseFloat(longitude as any) -
+              radiusKm /
+                (111 * Math.cos((parseFloat(latitude as any) * Math.PI) / 180)),
+            lte:
+              parseFloat(longitude as any) +
+              radiusKm /
+                (111 * Math.cos((parseFloat(latitude as any) * Math.PI) / 180)),
           },
         },
       };
@@ -645,7 +670,7 @@ export class AidRequestsService {
     // Add distance calculation if coordinates were provided
     let aidRequestsWithMeta = aidRequests;
     if (latitude && longitude) {
-      aidRequestsWithMeta = aidRequests.map(request => {
+      aidRequestsWithMeta = aidRequests.map((request) => {
         const distance = this.calculateDistance(
           parseFloat(latitude as any),
           parseFloat(longitude as any),
@@ -656,7 +681,7 @@ export class AidRequestsService {
         // Create a properly typed object with all required properties preserved
         return {
           ...request,
-          distanceKm: parseFloat(distance.toFixed(2))
+          distanceKm: parseFloat(distance.toFixed(2)),
         };
       }) as typeof aidRequests;
     }

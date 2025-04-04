@@ -38,7 +38,7 @@ describe('FaqController (e2e)', () => {
       .send({
         question: 'Test Question?',
         answer: 'Test Answer',
-        category: 'General'
+        category: 'General',
       })
       .expect(201)
       .expect((res) => {
@@ -54,7 +54,7 @@ describe('FaqController (e2e)', () => {
       .patch('/faq/1')
       .send({
         question: 'Updated Question?',
-        answer: 'Updated Answer'
+        answer: 'Updated Answer',
       })
       .expect(200)
       .expect((res) => {
@@ -71,10 +71,10 @@ describe('FaqController (e2e)', () => {
       .send({
         question: 'Question to Delete?',
         answer: 'Answer to Delete',
-        category: 'General'
+        category: 'General',
       })
       .expect(201)
-      .then(res => {
+      .then((res) => {
         const faqId = res.body.id;
         return request(testHelper.getApp().getHttpServer())
           .delete(`/faq/${faqId}`)

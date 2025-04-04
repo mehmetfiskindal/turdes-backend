@@ -16,7 +16,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
-    private readonly prismaService: PrismaService // Prisma servisi ekledik
+    private readonly prismaService: PrismaService, // Prisma servisi ekledik
   ) {}
 
   @Post('register')
@@ -73,7 +73,10 @@ export class AuthController {
 
   @Post('resend-verification-email')
   @ApiOperation({ summary: 'Resend verification email' })
-  @ApiResponse({ status: 200, description: 'Verification email resent successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email resent successfully.',
+  })
   @ApiResponse({ status: 400, description: 'Invalid request.' })
   async resendVerificationEmail(@Body('email') email: string) {
     return this.authService.resendVerificationEmail(email);

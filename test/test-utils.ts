@@ -14,11 +14,11 @@ export class TestHelper {
 
     this.app = moduleFixture.createNestApplication();
     await this.app.init();
-    
+
     // Token değerleri çevre değişkenlerinden gelir, varsayılan değerleri belirleyin
     this.accessToken = process.env.TEST_ACCESS_TOKEN || 'test-access-token';
     this.adminToken = process.env.TEST_ADMIN_TOKEN || 'test-admin-token';
-    
+
     return this;
   }
 
