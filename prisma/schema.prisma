@@ -50,7 +50,7 @@ model AidRequest {
   user           User          @relation(fields: [userId], references: [id])
   Comment        Comment[]
   Document       Document[]
-  qrCodeUrl      String?       @db.VarChar(255)
+  qrCodeUrl      String?       @db.Text
   isUrgent       Boolean       @default(false)
   recurring      Boolean       @default(false)
   verified       Boolean       @default(false)

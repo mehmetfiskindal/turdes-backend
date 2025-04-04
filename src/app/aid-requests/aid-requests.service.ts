@@ -106,6 +106,7 @@ export class AidRequestsService {
     });
 
     const qrCodeUrl = await QRCode.toDataURL(`aidRequest:${aidRequest.id}`);
+    console.log('Generated QR Code URL length:', qrCodeUrl.length);
     await this.prismaService.aidRequest.update({
       where: { id: aidRequest.id },
       data: { qrCodeUrl },

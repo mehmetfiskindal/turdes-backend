@@ -36,4 +36,17 @@ export class CreateAidRequestDto {
 
   @ApiProperty({ required: false, default: false })
   readonly recurring: boolean;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  readonly qrCodeUrl?: string;
+
+  @ApiProperty({ required: false, default: false })
+  readonly isUrgent?: boolean;
+
+  @ApiProperty({ required: false, default: false })
+  readonly verified?: boolean;
+
+  @ApiProperty({ required: false, default: false })
+  readonly reported?: boolean;
 }
