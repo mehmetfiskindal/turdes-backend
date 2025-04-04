@@ -17,6 +17,7 @@ import { FaqModule } from './faq/faq.module';
 import { EducationModule } from './education/education.module';
 import { DonorsModule } from './donors/donors.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CampaignsModule } from './campaigns/campaigns.module';
     AidRequestsModule,
     OrganizationsModule,
     CaslModule,
+    DashboardModule,
     VolunteersModule,
     SecurityModule,
     ReportsModule,
