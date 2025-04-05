@@ -3,7 +3,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { GoogleAuth } from 'google-auth-library';
-import * as serviceAccount from './turdes.json'; // Firebase'den indirdiğiniz JSON dosyası
 
 @Injectable()
 export class FirebaseAdminService {
@@ -14,8 +13,8 @@ export class FirebaseAdminService {
   private async getAccessToken(): Promise<string> {
     const client = new GoogleAuth({
       credentials: {
-        client_email: serviceAccount.client_email,
-        private_key: serviceAccount.private_key,
+        client_email: process.env.client_email,
+        private_key: process.env.private_key,
       },
       scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
     });
