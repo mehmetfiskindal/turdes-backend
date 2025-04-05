@@ -29,8 +29,6 @@ export class EducationController {
     return this.educationService.uploadTraining(uploadTrainingDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all training materials' })
   @ApiResponse({
     status: 200,

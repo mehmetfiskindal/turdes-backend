@@ -50,8 +50,8 @@ export class AuthService {
         phone: userDto.phone,
         role: userDto.role,
         passwordHash: passwordHash,
-        isEmailVerified: false,
-        verificationToken: verificationToken,
+        isEmailVerified: false, // Her zaman false olarak başlar
+        verificationToken: verificationToken, // Her zaman sistem tarafından üretilir
         tokenExpiresAt: expiresAt, // Save expiration time
       },
     });

@@ -9,8 +9,8 @@ export class EducationService {
   async uploadTraining(uploadTrainingDto: UploadTrainingDto) {
     return this.prisma.trainingMaterial.create({
       data: {
-        ...uploadTrainingDto,
-        url: uploadTrainingDto.url,
+        title: uploadTrainingDto.title,
+        url: uploadTrainingDto.url || uploadTrainingDto.fileUrl, // url alanını fileUrl'den alıyoruz, eğer url boşsa
       },
     });
   }

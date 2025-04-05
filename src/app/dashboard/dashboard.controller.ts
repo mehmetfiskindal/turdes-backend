@@ -9,15 +9,16 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '../roles/roles.enum';
+import { RoleGuard } from '../auth/role.guard';
 
 @ApiTags('dashboard')
 @Controller('dashboard')
+@UseGuards(JwtAuthGuard, RoleGuard)
+@ApiBearerAuth()
+@Roles(Role.Admin)
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @Roles(Role.Admin)
   @ApiOperation({ summary: 'Get comprehensive analytics dashboard' })
   @ApiResponse({
     status: 200,
@@ -28,8 +29,6 @@ export class DashboardController {
     return this.dashboardService.getComprehensiveAnalytics();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get aid distribution statistics' })
   @ApiResponse({
     status: 200,
@@ -40,8 +39,6 @@ export class DashboardController {
     return this.dashboardService.getAidDistributionStats();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user category statistics' })
   @ApiResponse({
     status: 200,
@@ -52,8 +49,6 @@ export class DashboardController {
     return this.dashboardService.getUserCategoryStats();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get organization statistics' })
   @ApiResponse({
     status: 200,
@@ -64,8 +59,6 @@ export class DashboardController {
     return this.dashboardService.getOrganizationStats();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get donation statistics' })
   @ApiResponse({
     status: 200,
@@ -76,8 +69,6 @@ export class DashboardController {
     return this.dashboardService.getDonationStats();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get aid efficiency statistics by location' })
   @ApiResponse({
     status: 200,

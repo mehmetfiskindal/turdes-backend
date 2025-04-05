@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
+import { Role } from '../casl/action';
 
 @Injectable()
 export class DonorsService {
@@ -36,6 +41,56 @@ export class DonorsService {
         },
       },
     });
+  }
+
+  async findUserDonations(userId: string) {
+    return this.prisma.donation.findMany({
+      where: { userId: Number(userId) },
+      include: {
+        donor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findDonationById(id: string, user: any) {
+    const donation = await this.prisma.donation.findUnique({
+      where: { id: Number(id) },
+      include: {
+        donor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!donation) {
+      throw new NotFoundException(`Donation with ID ${id} not found`);
+    }
+
+    // Admin ve OrganizationOwner her bağışı görebilir
+    if (user.role === Role.Admin || user.role === Role.OrganizationOwner) {
+      return donation;
+    }
+
+    // Kullanıcı sadece kendi bağışını görebilir
+    if (donation.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to view this donation',
+      );
+    }
+
+    return donation;
   }
 
   async findAnonymousDonations() {

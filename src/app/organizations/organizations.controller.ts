@@ -7,9 +7,12 @@ import {
   Patch,
   Param,
   ParseIntPipe,
+  SetMetadata,
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RoleGuard } from '../auth/role.guard';
+import { Role } from '../casl/action';
 
 import {
   ApiTags,
@@ -24,6 +27,9 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { OrganizationRatingDto } from './dto/organization-rating.dto';
+
+// Roles için bir decorator oluşturuyorum
+export const Roles = (...roles: Role[]) => SetMetadata('roles', roles);
 
 @ApiTags('organizations') // Grouping under "organizations" in Swagger documentation
 @Controller('organizations')
@@ -58,8 +64,13 @@ export class OrganizationsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
   @ApiResponse({ status: 401, description: 'Unauthorized access.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions.',
+  })
   @ApiBody({ type: CreateOrganizationDto }) // Body'nin tipini Swagger'da belirtiyoruz
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(Role.Admin, Role.OrganizationOwner)
   @ApiBearerAuth()
   @Post()
   async create(@Body() organizationDto: CreateOrganizationDto) {
