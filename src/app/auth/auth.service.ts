@@ -43,12 +43,14 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 30); // Token valid for 30 minutes
 
+    // API üzerinden yapılan tüm kayıtlarda rol 'user' olarak ayarlanır
+    // Admin rolü sadece veritabanı script'i ile atanabilir
     const user = await this.prismaService.user.create({
       data: {
         email: userDto.email,
         name: userDto.name,
         phone: userDto.phone,
-        role: userDto.role,
+        role: 'user', // Kullanıcı tarafından gönderilen rol bilgisi dikkate alınmaz, her zaman 'user'
         passwordHash: passwordHash,
         isEmailVerified: false, // Her zaman false olarak başlar
         verificationToken: verificationToken, // Her zaman sistem tarafından üretilir

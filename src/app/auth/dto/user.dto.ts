@@ -24,8 +24,10 @@ export class UserDto {
   readonly password!: string; // Definite assignment assertion
 
   @ApiProperty({
-    example: 'admin | user',
-    description: 'The role of the user',
+    example: 'user',
+    description:
+      'The role of the user (note: admin role can only be set via DB script)',
+    required: false,
   })
-  readonly role!: string; // Definite assignment assertion
+  readonly role?: string; // Opsiyonel alan, kullanıcı tarafından belirtilmediğinde 'user' olacak
 }
