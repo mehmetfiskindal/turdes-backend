@@ -14,6 +14,24 @@ export class DonorsService {
   async createDonation(createDonationDto: CreateDonationDto) {
     const { amount, donorId, userId, anonymous = false } = createDonationDto;
 
+    // Bağışçının var olup olmadığını kontrol ediyoruz
+    const donorExists = await this.prisma.donor.findUnique({
+      where: { id: donorId },
+    });
+
+    if (!donorExists) {
+      throw new NotFoundException(`Donor with ID ${donorId} not found`);
+    }
+
+    // Kullanıcının var olup olmadığını kontrol ediyoruz
+    const userExists = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!userExists) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     return this.prisma.donation.create({
       data: {
         amount,
@@ -61,7 +79,7 @@ export class DonorsService {
 
   async findDonationById(id: string, user: any) {
     const donation = await this.prisma.donation.findUnique({
-      where: { id: Number(id) },
+      where: { id: parseInt(id) },
       include: {
         donor: {
           select: {

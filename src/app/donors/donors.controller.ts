@@ -65,19 +65,6 @@ export class DonorsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get donation by ID (if owned by user or admin)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully retrieved donation.',
-  })
-  @ApiParam({ name: 'id', description: 'Donation ID' })
-  @Get('donations/:id')
-  async findDonationById(@Param('id') id: string, @Req() req) {
-    return this.donorsService.findDonationById(id, req.user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get anonymous donations' })
   @ApiResponse({
     status: 200,
@@ -99,5 +86,18 @@ export class DonorsController {
   @Get('donations/statistics')
   async getDonationStatistics() {
     return this.donorsService.getDonationStatistics();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get donation by ID (if owned by user or admin)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved donation.',
+  })
+  @ApiParam({ name: 'id', description: 'Donation ID' })
+  @Get('donations/:id')
+  async findDonationById(@Param('id') id: string, @Req() req) {
+    return this.donorsService.findDonationById(id, req.user);
   }
 }
