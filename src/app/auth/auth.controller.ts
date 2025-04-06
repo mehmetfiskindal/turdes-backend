@@ -6,7 +6,6 @@ import {
   Get,
   Query,
   Res,
-  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
@@ -19,7 +18,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Response } from 'express';
 
 @Controller('auth')
-@ApiTags('Authentication') // Api Tag ekledik
+@ApiTags('Authentication')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -86,47 +85,38 @@ export class AuthController {
   ) {
     try {
       await this.authService.verifyEmail({ email, token });
-      return res.status(HttpStatus.OK).send(`
-        <html>
-          <head>
-            <title>Email Verified</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .success { color: #4CAF50; }
-              .button { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1 class="success">Email Doğrulandı!</h1>
-              <p>E-posta adresiniz başarıyla doğrulandı. Şimdi hesabınıza giriş yapabilirsiniz.</p>
-              <a href="${process.env.FRONTEND_URL || '/'}" class="button">Giriş Sayfasına Dön</a>
-            </div>
-          </body>
-        </html>
-      `);
+
+      // MVC yaklaşımı: Template'e veri gönderiyoruz
+      return res.render('auth/verify-email-success', {
+        message:
+          'E-posta adresiniz başarıyla doğrulandı! Artık hesabınıza giriş yapabilirsiniz.',
+        loginUrl: process.env.FRONTEND_URL || '/',
+      });
     } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).send(`
-        <html>
-          <head>
-            <title>Verification Failed</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .error { color: #f44336; }
-              .button { display: inline-block; padding: 10px 20px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1 class="error">Doğrulama Başarısız</h1>
-              <p>${error.message || 'Doğrulama işlemi sırasında bir hata oluştu. Lütfen tekrar deneyiniz.'}</p>
-              <a href="${process.env.FRONTEND_URL || '/'}" class="button">Ana Sayfaya Dön</a>
-            </div>
-          </body>
-        </html>
-      `);
+      // Hata tipine göre özel mesajlar ve davranışlar
+      let showResend = false;
+      let errorMessage =
+        'Doğrulama işlemi sırasında bir hata oluştu. Lütfen tekrar deneyiniz.';
+
+      if (error.message && error.message.includes('expired')) {
+        errorMessage =
+          'Doğrulama bağlantısının süresi dolmuş. Lütfen yeni bir doğrulama e-postası talep ediniz.';
+        showResend = true;
+      } else if (
+        error.message &&
+        error.message.includes('Invalid verification token')
+      ) {
+        errorMessage =
+          'Geçersiz doğrulama kodu. Lütfen e-postadaki bağlantıyı kontrol ediniz.';
+      }
+
+      // MVC yaklaşımı: Hata durumunda ilgili template'e veri gönderiyoruz
+      return res.render('auth/verify-email-error', {
+        message: errorMessage,
+        showResend: showResend,
+        resendUrl: `${process.env.FRONTEND_URL}/resend-verification?email=${encodeURIComponent(email)}`,
+        homeUrl: process.env.FRONTEND_URL || '/',
+      });
     }
   }
 

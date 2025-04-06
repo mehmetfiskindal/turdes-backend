@@ -7,10 +7,12 @@ import { AppModule } from './app/app.module';
 import * as dotenv from 'dotenv';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 dotenv.config(); // .env dosyasındaki değişkenleri yükler
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use(cookieParser());
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
@@ -22,6 +24,10 @@ async function bootstrap() {
     .addTag('turdes')
     .addBearerAuth()
     .build();
+
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  app.setViewEngine('hbs');
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
