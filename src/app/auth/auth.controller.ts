@@ -1,4 +1,13 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Query,
+  Res,
+  HttpStatus,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -7,6 +16,7 @@ import { RefreshTokenDto } from './dto/refresh.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { Response } from 'express';
 
 @Controller('auth')
 @ApiTags('Authentication') // Api Tag ekledik
@@ -63,6 +73,61 @@ export class AuthController {
   @ApiBody({ type: VerifyEmailDto })
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.verifyEmail(verifyEmailDto);
+  }
+
+  @Get('verify-email')
+  @ApiOperation({ summary: 'Verify user email via link' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid request.' })
+  async verifyEmailGet(
+    @Query('token') token: string,
+    @Query('email') email: string,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.authService.verifyEmail({ email, token });
+      return res.status(HttpStatus.OK).send(`
+        <html>
+          <head>
+            <title>Email Verified</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .success { color: #4CAF50; }
+              .button { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1 class="success">Email Doğrulandı!</h1>
+              <p>E-posta adresiniz başarıyla doğrulandı. Şimdi hesabınıza giriş yapabilirsiniz.</p>
+              <a href="${process.env.FRONTEND_URL || '/'}" class="button">Giriş Sayfasına Dön</a>
+            </div>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).send(`
+        <html>
+          <head>
+            <title>Verification Failed</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .error { color: #f44336; }
+              .button { display: inline-block; padding: 10px 20px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1 class="error">Doğrulama Başarısız</h1>
+              <p>${error.message || 'Doğrulama işlemi sırasında bir hata oluştu. Lütfen tekrar deneyiniz.'}</p>
+              <a href="${process.env.FRONTEND_URL || '/'}" class="button">Ana Sayfaya Dön</a>
+            </div>
+          </body>
+        </html>
+      `);
+    }
   }
 
   @Post('resend-verification-email')
