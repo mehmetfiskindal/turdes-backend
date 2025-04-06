@@ -66,7 +66,7 @@ export class AuthService {
   }
 
   private async sendVerificationEmail(email: string, token: string) {
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+    const verificationUrl = `${process.env.HOST_URL}verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
     await this.transporter.sendMail({
       from: process.env.MAIL_FROM,
