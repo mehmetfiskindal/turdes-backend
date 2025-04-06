@@ -66,8 +66,8 @@ export class AuthService {
   }
 
   private async sendVerificationEmail(email: string, token: string) {
-    // API endpoint'ine yönlendiren doğrulama URL'i
-    const verificationUrl = `${process.env.HOST_URL}verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+    // URL yapısını düzelttik, auth/ kısmını ekledik
+    const verificationUrl = `${process.env.HOST_URL}auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
     await this.transporter.sendMail({
       from: process.env.MAIL_FROM,
