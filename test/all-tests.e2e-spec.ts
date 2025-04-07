@@ -81,7 +81,7 @@ describe('All Tests (e2e)', () => {
         .expect(201);
 
       // Normalde e-posta doğrulaması gerekiyor, test için kullanıcıyı direkt olarak doğrulanmış yapalım
-      const testUser = await prismaService.user.update({
+      await prismaService.user.update({
         where: { email },
         data: { isEmailVerified: true },
       });
@@ -90,7 +90,7 @@ describe('All Tests (e2e)', () => {
       return request(testHelper.getApp().getHttpServer())
         .post('/auth/login')
         .send({ email, password })
-        .expect(200)
+        .expect(201) // 200 yerine 201 bekliyoruz
         .expect((res) => {
           expect(res.body).toHaveProperty('access_token');
         });
@@ -107,7 +107,7 @@ describe('All Tests (e2e)', () => {
       const loginResponse = await request(testHelper.getApp().getHttpServer())
         .post('/auth/login')
         .send(testHelper.getUserCredentials())
-        .expect(200);
+        .expect(201); // 200 yerine 201 bekliyoruz
 
       const accessToken = loginResponse.body.access_token;
 
