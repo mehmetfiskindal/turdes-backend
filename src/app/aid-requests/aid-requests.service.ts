@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
@@ -13,12 +18,27 @@ export class AidRequestsService {
   ) {}
 
   async addComment(aidRequestId: number, content: string) {
+    // AidRequest'in varlığını kontrol et
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id: aidRequestId },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(
+        `${aidRequestId} ID'li yardım talebi bulunamadı`,
+      );
+    }
+
+    if (!content || content.trim() === '') {
+      throw new BadRequestException('Yorum içeriği boş olamaz');
+    }
+
     return this.prismaService.comment.create({
       data: {
         content: content,
         aidRequest: {
           connect: {
-            id: aidRequestId, // aidRequestId artık doğru türde kullanılıyor
+            id: aidRequestId,
           },
         },
       },
@@ -31,10 +51,22 @@ export class AidRequestsService {
     documentName: string,
     documentUrl: string,
   ) {
-    const numericId = parseInt(aidRequestId as unknown as string, 10); // aidRequestId'yi açıkça sayıya dönüştürüyoruz
+    const numericId = parseInt(aidRequestId as unknown as string, 10);
     if (isNaN(numericId)) {
-      throw new Error('Invalid aid request ID');
+      throw new BadRequestException('Geçersiz yardım talebi ID formatı');
     }
+
+    // AidRequest'in varlığını kontrol et
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id: numericId },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(
+        `${numericId} ID'li yardım talebi bulunamadı`,
+      );
+    }
+
     return this.prismaService.document.create({
       data: {
         name: documentName,
@@ -82,7 +114,9 @@ export class AidRequestsService {
       });
 
       if (!organization) {
-        throw new Error('Organization not found');
+        throw new NotFoundException(
+          `Organizasyon bulunamadı. ID: ${createAidRequestDto.organizationId}`,
+        );
       }
     }
 
@@ -189,7 +223,7 @@ export class AidRequestsService {
     // Haversine formula to calculate distance between two points on Earth
     const R = 6371; // Earth's radius in km
     const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon2 - lon1);
+    const dLon = this.deg2rad(lon1 - lon2);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(this.deg2rad(lat1)) *
@@ -242,7 +276,9 @@ export class AidRequestsService {
     const aidRequestId = parseInt(qrCodeData.replace('aidRequest:', ''));
 
     if (isNaN(aidRequestId)) {
-      throw new Error('Invalid QR code data');
+      throw new BadRequestException(
+        'Geçersiz QR kod verisi. Doğru format: aidRequest:[ID]',
+      );
     }
 
     // Verify aid request exists
@@ -252,7 +288,9 @@ export class AidRequestsService {
     });
 
     if (!aidRequest) {
-      throw new Error('Aid request not found');
+      throw new NotFoundException(
+        `${aidRequestId} ID'li yardım talebi bulunamadı`,
+      );
     }
 
     // Update the aid request status
@@ -262,10 +300,10 @@ export class AidRequestsService {
     });
 
     // Send notification to the user
-    const message = `Your aid request (ID: ${aidRequestId}) has been ${newStatus.toLowerCase()}`;
+    const message = `Yardım talebiniz (ID: ${aidRequestId}) durumu: ${newStatus.toLowerCase()}`;
     await this.firebaseAdminService.sendPushNotification(
       aidRequest.userId.toString(),
-      'Aid Delivery Update',
+      'Yardım Teslim Güncelleme',
       message,
     );
 

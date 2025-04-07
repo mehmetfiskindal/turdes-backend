@@ -7,6 +7,8 @@ import {
   Param,
   Patch,
   Req,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { AidRequestsService } from './aid-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -53,6 +55,7 @@ export class AidRequestsController {
     description: 'The aid request has been successfully created.',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 404, description: 'Organization not found' })
   @ApiBody(
     { type: CreateAidRequestDto }, // Swagger için body tanımı
   ) // Swagger için body tanımı
@@ -61,12 +64,26 @@ export class AidRequestsController {
     @Body() createAidRequestDto: CreateAidRequestDto,
     @Req() req: RequestWithUser,
   ) {
-    const userId = req.user.id;
-    const aidRequest = await this.aidRequestsService.create(
-      createAidRequestDto,
-      userId,
-    );
-    return { ...aidRequest, qrCodeUrl: aidRequest.qrCodeUrl };
+    try {
+      const userId = req.user.id;
+      const aidRequest = await this.aidRequestsService.create(
+        createAidRequestDto,
+        userId,
+      );
+      return { ...aidRequest, qrCodeUrl: aidRequest.qrCodeUrl };
+    } catch (error) {
+      // Daha açıklayıcı hata mesajları için hata türlerine göre işleme
+      if (error instanceof NotFoundException) {
+        throw error; // Zaten uygun formatta, direkt olarak fırlat
+      }
+      if (error instanceof BadRequestException) {
+        throw error; // Zaten uygun formatta, direkt olarak fırlat
+      }
+      // Diğer tüm hatalar için genel hata mesajı
+      throw new BadRequestException(
+        error.message || 'Yardım talebi oluşturulurken bir hata oluştu',
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard)
