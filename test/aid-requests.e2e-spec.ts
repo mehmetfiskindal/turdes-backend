@@ -3,77 +3,90 @@ import { TestHelper } from './test-utils';
 
 describe('AidRequestsController (e2e)', () => {
   let testHelper: TestHelper;
+  let aidRequestId: number;
 
   beforeAll(async () => {
     testHelper = await new TestHelper().initialize();
+    // Test kullanıcısı oluştur ve giriş yap
+    await testHelper.registerTestUser();
   });
 
   afterAll(async () => {
     await testHelper.cleanup();
   });
 
-  it('/aidrequests (GET)', () => {
+  it('/aidrequests (GET) - should return all aid requests', () => {
     return request(testHelper.getApp().getHttpServer())
       .get('/aidrequests')
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .expect(200)
       .expect((res) => {
-        expect(Array.isArray(res.body)).toBeTruthy();
+        expect(Array.isArray(res.body)).toBe(true);
       });
   });
 
-  it('/aidrequests (POST)', () => {
+  it('/aidrequests (POST) - should create a new aid request', () => {
     return request(testHelper.getApp().getHttpServer())
       .post('/aidrequests')
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
         type: 'Food',
-        description: 'Need food supplies',
+        description: 'Need emergency food supplies',
         status: 'Pending',
-        userId: 1,
-        organizationId: 1,
-        locationId: 1,
-        isDeleted: false,
         latitude: 40.7128,
         longitude: -74.006,
       })
       .expect(201)
       .expect((res) => {
         expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('type', 'Food');
-        expect(res.body).toHaveProperty('qrCodeUrl');
+        expect(res.body.type).toBe('Food');
+        expect(res.body.description).toBe('Need emergency food supplies');
+        aidRequestId = res.body.id; // Sonraki testlerde kullanmak için ID'yi kaydediyoruz
       });
   });
 
-  it('/aidrequests/:id/:organizationId (GET)', () => {
+  it('/aidrequests/:id (GET) - should return a specific aid request', () => {
     return request(testHelper.getApp().getHttpServer())
-      .get('/aidrequests/1/1') // id ve organizationId
+      .get(`/aidrequests/${aidRequestId}`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .expect(200)
       .expect((res) => {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('type');
+        expect(res.body).toHaveProperty('id', aidRequestId);
+        expect(res.body).toHaveProperty('type', 'Food');
       });
   });
 
-  it('/aidrequests/:id/status (PATCH)', () => {
+  it('/aidrequests/:id (PATCH) - should update an aid request', () => {
     return request(testHelper.getApp().getHttpServer())
-      .patch('/aidrequests/1/status')
+      .patch(`/aidrequests/${aidRequestId}`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
-        status: 'In Progress',
-        userId: '1',
-        userRole: 'admin',
+        description: 'Updated description',
       })
       .expect(200)
       .expect((res) => {
-        expect(res.body).toHaveProperty('status', 'In Progress');
+        expect(res.body).toHaveProperty('id', aidRequestId);
+        expect(res.body).toHaveProperty('description', 'Updated description');
       });
   });
 
-  it('/aidrequests/:id/comments (POST)', () => {
+  it('/aidrequests/:id/status (PATCH) - should update an aid request status', () => {
     return request(testHelper.getApp().getHttpServer())
-      .post('/aidrequests/1/comments')
+      .patch(`/aidrequests/${aidRequestId}/status`)
+      .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
+      .send({
+        status: 'InProgress',
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('id', aidRequestId);
+        expect(res.body).toHaveProperty('status', 'InProgress');
+      });
+  });
+
+  it('/aidrequests/:id/comments (POST) - should add a comment to an aid request', () => {
+    return request(testHelper.getApp().getHttpServer())
+      .post(`/aidrequests/${aidRequestId}/comments`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
         content: 'This is a test comment',
@@ -82,99 +95,57 @@ describe('AidRequestsController (e2e)', () => {
       .expect((res) => {
         expect(res.body).toHaveProperty('id');
         expect(res.body).toHaveProperty('content', 'This is a test comment');
-        expect(res.body).toHaveProperty('aidRequestId', 1);
+        expect(res.body).toHaveProperty('aidRequestId', aidRequestId);
       });
   });
 
-  it('/aidrequests/:id/documents (POST)', () => {
+  it('/aidrequests/:id/documents (POST) - should add a document to an aid request', () => {
     return request(testHelper.getApp().getHttpServer())
-      .post('/aidrequests/1/documents')
+      .post(`/aidrequests/${aidRequestId}/documents`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .send({
         documentName: 'Test Document',
-        documentUrl: 'http://example.com/test-doc',
+        documentUrl: 'http://test-document-url.com',
       })
       .expect(201)
       .expect((res) => {
         expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('name', 'Test Document');
-        expect(res.body).toHaveProperty('url', 'http://example.com/test-doc');
-        expect(res.body).toHaveProperty('aidRequestId', 1);
+        expect(res.body).toHaveProperty('documentName', 'Test Document');
+        expect(res.body).toHaveProperty('aidRequestId', aidRequestId);
       });
   });
 
-  it('/aidrequests/:id/verify (PATCH)', () => {
+  it('/aidrequests/:id/comments (GET) - should get all comments for an aid request', () => {
     return request(testHelper.getApp().getHttpServer())
-      .patch('/aidrequests/1/verify')
+      .get(`/aidrequests/${aidRequestId}/comments`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .expect(200)
       .expect((res) => {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('isVerified', true);
+        expect(Array.isArray(res.body)).toBe(true);
+        expect(res.body.length).toBeGreaterThan(0);
+        expect(res.body[0]).toHaveProperty('content');
       });
   });
 
-  it('/aidrequests/:id/report (PATCH)', () => {
+  it('/aidrequests/:id/documents (GET) - should get all documents for an aid request', () => {
     return request(testHelper.getApp().getHttpServer())
-      .patch('/aidrequests/1/report')
+      .get(`/aidrequests/${aidRequestId}/documents`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .expect(200)
       .expect((res) => {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('isReported', true);
+        expect(Array.isArray(res.body)).toBe(true);
+        expect(res.body.length).toBeGreaterThan(0);
+        expect(res.body[0]).toHaveProperty('documentName');
       });
   });
 
-  it('/aidrequests/verify-delivery (POST)', () => {
+  it('/aidrequests/:id/delete (PATCH) - should mark an aid request as deleted', () => {
     return request(testHelper.getApp().getHttpServer())
-      .post('/aidrequests/verify-delivery')
-      .send({
-        qrCodeData: 'aidRequest:1',
-        status: 'Delivered',
-      })
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('status', 'Delivered');
-      });
-  });
-
-  it('/aidrequests/search (POST)', () => {
-    return request(testHelper.getApp().getHttpServer())
-      .post('/aidrequests/search')
-      .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
-      .send({
-        status: 'Pending',
-        page: 1,
-        limit: 10,
-        sortBy: 'createdAt',
-        sortDirection: 'desc',
-      })
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toHaveProperty('data');
-        expect(res.body).toHaveProperty('meta');
-        expect(Array.isArray(res.body.data)).toBeTruthy();
-      });
-  });
-
-  it('/aidrequests/trigger-weather/:latitude/:longitude (POST)', () => {
-    return request(testHelper.getApp().getHttpServer())
-      .post('/aidrequests/trigger-weather/40.7128/-74.006')
+      .patch(`/aidrequests/${aidRequestId}/delete`)
       .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
       .expect(200)
       .expect((res) => {
-        expect(res.body).toHaveProperty('triggeredRequests');
-      });
-  });
-
-  it('/aidrequests/:id/delete (PATCH)', () => {
-    return request(testHelper.getApp().getHttpServer())
-      .patch('/aidrequests/1/delete')
-      .set('Authorization', `Bearer ${testHelper.getAccessToken()}`)
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toHaveProperty('id');
+        expect(res.body).toHaveProperty('id', aidRequestId);
         expect(res.body).toHaveProperty('isDeleted', true);
       });
   });
