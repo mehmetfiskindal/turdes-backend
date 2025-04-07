@@ -2,6 +2,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
@@ -14,13 +15,18 @@ export class DonorsService {
   async createDonation(createDonationDto: CreateDonationDto) {
     const { amount, donorId, userId, anonymous = false } = createDonationDto;
 
+    // Bağış miktarı kontrolü
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Bağış miktarı sıfırdan büyük olmalıdır');
+    }
+
     // Bağışçının var olup olmadığını kontrol ediyoruz
     const donorExists = await this.prisma.donor.findUnique({
       where: { id: donorId },
     });
 
     if (!donorExists) {
-      throw new NotFoundException(`Donor with ID ${donorId} not found`);
+      throw new NotFoundException(`${donorId} ID'li bağışçı bulunamadı`);
     }
 
     // Kullanıcının var olup olmadığını kontrol ediyoruz
@@ -29,21 +35,27 @@ export class DonorsService {
     });
 
     if (!userExists) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException(`${userId} ID'li kullanıcı bulunamadı`);
     }
 
-    return this.prisma.donation.create({
-      data: {
-        amount,
-        donor: {
-          connect: { id: donorId },
+    try {
+      return await this.prisma.donation.create({
+        data: {
+          amount,
+          donor: {
+            connect: { id: donorId },
+          },
+          user: {
+            connect: { id: userId },
+          },
+          anonymous,
         },
-        user: {
-          connect: { id: userId },
-        },
-        anonymous,
-      },
-    });
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        `Bağış oluşturulurken bir hata oluştu: ${error.message}`,
+      );
+    }
   }
 
   async findAllDonations() {
@@ -93,7 +105,7 @@ export class DonorsService {
     });
 
     if (!donation) {
-      throw new NotFoundException(`Donation with ID ${id} not found`);
+      throw new NotFoundException(`Bağış ${id} ID'li bulunamadı`);
     }
 
     // Admin ve OrganizationOwner her bağışı görebilir
@@ -103,9 +115,7 @@ export class DonorsService {
 
     // Kullanıcı sadece kendi bağışını görebilir
     if (donation.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to view this donation',
-      );
+      throw new ForbiddenException('Bu bağışı görüntüleme izniniz yok');
     }
 
     return donation;

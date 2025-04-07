@@ -163,7 +163,21 @@ export class AidRequestsService {
   ) {
     if (userRole !== 'admin') {
       throw new UnauthorizedException(
-        'Only admins can update the status of aid requests',
+        'Yardım taleplerinin durumunu sadece yöneticiler güncelleyebilir',
+      );
+    }
+
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(`${id} ID'li yardım talebi bulunamadı`);
+    }
+
+    if (aidRequest.status === status) {
+      throw new BadRequestException(
+        `Yardım talebi zaten ${status} durumunda bulunuyor`,
       );
     }
 
@@ -175,7 +189,7 @@ export class AidRequestsService {
     const message = `Yardım talebinizin durumu güncellendi: ${status}`;
     await this.firebaseAdminService.sendPushNotification(
       userId,
-      'Aid Request Status Update',
+      'Yardım Talebi Durum Güncellemesi',
       message,
     );
 
@@ -184,6 +198,20 @@ export class AidRequestsService {
 
   // Yardım talebi silinemez , sadece isDeleted parametresi true olur
   async delete(id: number) {
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(`${id} ID'li yardım talebi bulunamadı`);
+    }
+
+    if (aidRequest.isDeleted) {
+      throw new BadRequestException(
+        `${id} ID'li yardım talebi zaten silinmiş durumda`,
+      );
+    }
+
     return this.prismaService.aidRequest.update({
       where: { id: Number(id) },
       data: { isDeleted: true },
@@ -255,6 +283,22 @@ export class AidRequestsService {
   }
 
   async verifyAidRequest(aidRequestId: number) {
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id: aidRequestId },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(
+        `${aidRequestId} ID'li yardım talebi bulunamadı`,
+      );
+    }
+
+    if (aidRequest.verified) {
+      throw new BadRequestException(
+        `${aidRequestId} ID'li yardım talebi zaten onaylanmış durumda`,
+      );
+    }
+
     return this.prismaService.aidRequest.update({
       where: { id: aidRequestId },
       data: { verified: true },
@@ -262,6 +306,22 @@ export class AidRequestsService {
   }
 
   async reportSuspiciousAidRequest(aidRequestId: number) {
+    const aidRequest = await this.prismaService.aidRequest.findUnique({
+      where: { id: aidRequestId },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(
+        `${aidRequestId} ID'li yardım talebi bulunamadı`,
+      );
+    }
+
+    if (aidRequest.reported) {
+      throw new BadRequestException(
+        `${aidRequestId} ID'li yardım talebi zaten şüpheli olarak raporlanmış durumda`,
+      );
+    }
+
     return this.prismaService.aidRequest.update({
       where: { id: aidRequestId },
       data: { reported: true },

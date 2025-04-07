@@ -168,14 +168,20 @@ If you need to enter these details manually:
     });
 
     if (!user) {
-      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'E-posta adresi veya şifre hatalı',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     if (
       typeof loginDto.password !== 'string' ||
       typeof user.passwordHash !== 'string'
     ) {
-      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Geçersiz kimlik bilgileri',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -183,12 +189,15 @@ If you need to enter these details manually:
       user.passwordHash,
     );
     if (!isPasswordValid) {
-      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'E-posta adresi veya şifre hatalı',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     if (!user.isEmailVerified) {
       throw new HttpException(
-        'Email not verified. Please verify your email or request a new verification email.',
+        'E-posta adresiniz doğrulanmadı. Lütfen e-postanızı doğrulayın veya yeni bir doğrulama e-postası talep edin.',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -260,6 +269,13 @@ If you need to enter these details manually:
   // Refresh token validation and generation
   async refreshToken(refreshToken: string) {
     try {
+      if (!refreshToken || refreshToken.trim() === '') {
+        throw new HttpException(
+          'Yenileme tokeni sağlanmadı',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const decoded = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_SECRET,
       });
@@ -273,7 +289,7 @@ If you need to enter these details manually:
 
       if (!user) {
         throw new HttpException(
-          'Invalid refresh token',
+          'Geçersiz yenileme tokeni. Lütfen tekrar giriş yapın.',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -286,8 +302,11 @@ If you need to enter these details manually:
         }),
       };
     } catch (e) {
+      if (e instanceof HttpException) {
+        throw e;
+      }
       throw new HttpException(
-        'Refresh token expired or invalid',
+        'Yenileme tokeniniz süresi dolmuş veya geçersiz. Lütfen tekrar giriş yapın.',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -300,18 +319,53 @@ If you need to enter these details manually:
     });
 
     if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Eğer kullanıcının e-posta doğrulaması yoksa
+    if (!user.isEmailVerified) {
+      throw new HttpException(
+        'E-posta adresiniz doğrulanmadı. Lütfen önce e-posta adresinizi doğrulayın.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Mevcut şifre kontrolü (isteğe bağlı, güvenlik için eklenebilir)
+    if (resetPasswordDto.currentPassword) {
+      const isCurrentPasswordValid = await bcrypt.compare(
+        resetPasswordDto.currentPassword,
+        user.passwordHash,
+      );
+
+      if (!isCurrentPasswordValid) {
+        throw new HttpException(
+          'Mevcut şifreniz yanlış. Lütfen geçerli bir şifre girin.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    // Yeni şifre geçerlilik kontrolü (isteğe bağlı)
+    if (resetPasswordDto.newPassword.length < 6) {
+      throw new HttpException(
+        'Yeni şifreniz en az 6 karakter uzunluğunda olmalıdır.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const newPasswordHash: string = await bcrypt.hash(
       resetPasswordDto.newPassword,
       10,
     );
+
     await this.prismaService.user.update({
       where: { email: resetPasswordDto.email },
       data: { passwordHash: newPasswordHash },
     });
 
-    return { message: 'Password reset successfully' };
+    return { message: 'Şifreniz başarıyla güncellendi' };
   }
 }

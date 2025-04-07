@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsString, IsOptional } from 'class-validator';
 
 export class ResetPasswordDto {
   @ApiProperty({
@@ -8,6 +8,16 @@ export class ResetPasswordDto {
   })
   @IsEmail()
   readonly email: string;
+
+  @ApiProperty({
+    example: 'CurrentPassword123',
+    description:
+      'The current password of the user (optional for security verification)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  readonly currentPassword?: string;
 
   @ApiProperty({
     example: 'NewPassword123',
