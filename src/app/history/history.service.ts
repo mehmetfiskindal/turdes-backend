@@ -12,7 +12,7 @@ export class HistoryService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(`${userId} ID'li kullanıcı bulunamadı`);
     }
 
     return user.aidRequests;
@@ -25,7 +25,9 @@ export class HistoryService {
     });
 
     if (!organization) {
-      throw new NotFoundException('Organization not found');
+      throw new NotFoundException(
+        `${organizationId} ID'li organizasyon bulunamadı`,
+      );
     }
 
     return organization.aidRequest;
