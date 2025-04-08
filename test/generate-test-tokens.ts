@@ -1,85 +1,64 @@
-/**
- * This utility script generates JWT tokens for testing purposes
- * Run it with: npx ts-node test/generate-test-tokens.ts
- */
-
-import * as jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
+
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Load environment variables
-dotenv.config({ path: '.env.test' });
+// Çevre değişkenlerini yükle
+dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test_secret';
-const ACCESS_EXPIRATION = process.env.JWT_ACCESS_EXPIRATION || '1h';
+/**
+ * Test tokenları oluşturmak için kullanılacak yardımcı script
+ * Bu script komut satırından çalıştırılabilir: npx ts-node generate-test-tokens.ts
+ */
+async function generateTestTokens() {
+  try {
+    console.log('Test tokenları oluşturuluyor...');
 
-// Generate a regular user token
-const generateUserToken = () => {
-  const payload = {
-    sub: 1,
-    email: 'test@test.com',
-    role: 'user',
-    iat: Math.floor(Date.now() / 1000),
-  };
+    // JWT secret test ortamı için rastgele oluşturuluyor
+    const jwtSecret =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRATION });
-};
+    // Test kullanıcıları için payload
+    const userPayload = {
+      id: 1,
+      email: 'test@test.com',
+      role: 'user',
+    };
 
-// Generate an admin token
-const generateAdminToken = () => {
-  const payload = {
-    sub: 2,
-    email: 'admin@test.com',
-    role: 'admin',
-    iat: Math.floor(Date.now() / 1000),
-  };
+    const adminPayload = {
+      id: 2,
+      email: 'admin@test.com',
+      role: 'admin',
+    };
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRATION });
-};
+    // Token oluşturma işlemi (gerçek uygulamada JWT kullanılıyor)
+    const userToken = Buffer.from(JSON.stringify(userPayload)).toString(
+      'base64',
+    );
+    const adminToken = Buffer.from(JSON.stringify(adminPayload)).toString(
+      'base64',
+    );
 
-// Generate and display tokens
-const userToken = generateUserToken();
-const adminToken = generateAdminToken();
+    // Test token'larını .env.test dosyasına yazıyoruz
+    const envContent = `
+TEST_JWT_SECRET=${jwtSecret}
+TEST_ACCESS_TOKEN=${userToken}
+TEST_ADMIN_TOKEN=${adminToken}
+`;
 
-console.log('User (Regular) Token:');
-console.log(userToken);
-console.log('\nAdmin Token:');
-console.log(adminToken);
-
-// Update .env.test file with the tokens if it exists
-try {
-  const envTestPath = path.join(process.cwd(), '.env.test');
-  if (fs.existsSync(envTestPath)) {
-    let envContent = fs.readFileSync(envTestPath, 'utf8');
-
-    // Replace or add TEST_ACCESS_TOKEN
-    if (envContent.includes('TEST_ACCESS_TOKEN=')) {
-      envContent = envContent.replace(
-        /TEST_ACCESS_TOKEN=.*(\r?\n|$)/g,
-        `TEST_ACCESS_TOKEN=${userToken}$1`,
-      );
-    } else {
-      envContent += `\nTEST_ACCESS_TOKEN=${userToken}`;
-    }
-
-    // Replace or add TEST_ADMIN_TOKEN
-    if (envContent.includes('TEST_ADMIN_TOKEN=')) {
-      envContent = envContent.replace(
-        /TEST_ADMIN_TOKEN=.*(\r?\n|$)/g,
-        `TEST_ADMIN_TOKEN=${adminToken}$1`,
-      );
-    } else {
-      envContent += `\nTEST_ADMIN_TOKEN=${adminToken}`;
-    }
-
-    fs.writeFileSync(envTestPath, envContent);
-    console.log('\nUpdated .env.test file with new tokens');
-  } else {
-    console.log('\nNo .env.test file found. Create one with these tokens:');
-    console.log(`TEST_ACCESS_TOKEN=${userToken}`);
-    console.log(`TEST_ADMIN_TOKEN=${adminToken}`);
+    fs.writeFileSync(path.join(__dirname, '../.env.test'), envContent);
+    console.log('.env.test dosyası oluşturuldu.');
+    console.log('Test tokenları başarıyla oluşturuldu!');
+  } catch (error) {
+    console.error('Token oluşturma hatası:', error);
+    process.exit(1);
   }
-} catch (error) {
-  console.error('Error updating .env.test file:', error);
 }
+
+// Scripti direkt olarak çalıştırırsak tokenları oluştur
+if (require.main === module) {
+  generateTestTokens();
+}
+
+export { generateTestTokens };

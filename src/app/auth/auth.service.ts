@@ -65,13 +65,41 @@ export class AuthService {
     };
   }
 
-  private async sendVerificationEmail(email: string, token: string) {
-    // URL yapısını düzelttik, auth/ kısmını ekledik
-    const verificationUrl = `${process.env.HOST_URL}auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+  // E-posta doğrulama e-postası gönderen metot
+  async sendVerificationEmail(
+    userOrEmail: User | string,
+    token: string,
+  ): Promise<void> {
+    let user: User;
+
+    // Eğer string tipinde bir email parametresi geçirildiyse, kullanıcıyı veritabanından al
+    if (typeof userOrEmail === 'string') {
+      user = await this.prismaService.user.findUnique({
+        where: { email: userOrEmail },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+    } else {
+      // Doğrudan User nesnesi verilmiş
+      user = userOrEmail;
+    }
+
+    // Test ortamında e-posta gönderimi yapma
+    if (process.env.NODE_ENV === 'test') {
+      console.log(
+        `TEST MODE: Email would be sent to ${user.email} with token ${token}`,
+      );
+      return;
+    }
+
+    // Normal ortamda e-posta gönderimi
+    const verificationUrl = `${process.env.HOST_URL}auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
     await this.transporter.sendMail({
       from: process.env.MAIL_FROM,
-      to: email,
+      to: user.email,
       subject: 'Verify your email',
       text: `Please verify your email by clicking on the following link: ${verificationUrl}
 
@@ -79,7 +107,7 @@ This link contains both your verification token and email address to complete th
 
 If you need to enter these details manually:
 - Your verification token: ${token}
-- Your email: ${email}`,
+- Your email: ${user.email}`,
       html: `
         <h2>Email Verification</h2>
         <p>Please verify your email by clicking on the following link:</p>
@@ -90,8 +118,70 @@ If you need to enter these details manually:
         <p>If you need to enter these details manually:</p>
         <ul>
           <li><strong>Your verification token:</strong> ${token}</li>
-          <li><strong>Your email:</strong> ${email}</li>
+          <li><strong>Your email:</strong> ${user.email}</li>
         </ul>
+      `,
+    });
+  }
+
+  // Şifre sıfırlama e-postası gönderen metot
+  async sendPasswordResetEmail(
+    userOrEmail: User | string,
+    token: string,
+  ): Promise<void> {
+    let user: User;
+
+    // Eğer string tipinde bir email parametresi geçirildiyse, kullanıcıyı veritabanından al
+    if (typeof userOrEmail === 'string') {
+      user = await this.prismaService.user.findUnique({
+        where: { email: userOrEmail },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+    } else {
+      // Doğrudan User nesnesi verilmiş
+      user = userOrEmail;
+    }
+
+    // Test ortamında e-posta gönderimi yapma
+    if (process.env.NODE_ENV === 'test') {
+      console.log(
+        `TEST MODE: Password reset email would be sent to ${user.email} with token ${token}`,
+      );
+      return;
+    }
+
+    // Normal ortamda e-posta gönderimi
+    const resetUrl = `${process.env.HOST_URL}auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+
+    await this.transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: user.email,
+      subject: 'Şifre Sıfırlama İsteği',
+      text: `Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın: ${resetUrl}
+
+Bu bağlantı şifre sıfırlama işlemi için hem token hem de e-posta adresinizi içerir.
+
+Bu bilgileri manuel olarak girmeniz gerekirse:
+- Şifre sıfırlama tokeniniz: ${token}
+- E-posta adresiniz: ${user.email}
+
+Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
+      html: `
+        <h2>Şifre Sıfırlama</h2>
+        <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:</p>
+        <p><a href="${resetUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Şifremi Sıfırla</a></p>
+        <p>Veya bu URL'yi tarayıcınıza kopyalayıp yapıştırın:</p>
+        <p>${resetUrl}</p>
+        <p>Bu bağlantı şifre sıfırlama işlemi için hem token hem de e-posta adresinizi içerir.</p>
+        <p>Bu bilgileri manuel olarak girmeniz gerekirse:</p>
+        <ul>
+          <li><strong>Şifre sıfırlama tokeniniz:</strong> ${token}</li>
+          <li><strong>E-posta adresiniz:</strong> ${user.email}</li>
+        </ul>
+        <p>Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.</p>
       `,
     });
   }
