@@ -9,6 +9,7 @@ import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 import * as QRCode from 'qrcode';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class AidRequestsService {
@@ -146,13 +147,106 @@ export class AidRequestsService {
     });
 
     const qrCodeUrl = await QRCode.toDataURL(`aidRequest:${aidRequest.id}`);
-    console.log('Generated QR Code URL length:', qrCodeUrl.length);
     await this.prismaService.aidRequest.update({
       where: { id: aidRequest.id },
       data: { qrCodeUrl },
     });
 
     return { ...aidRequest, qrCodeUrl };
+  }
+
+  // Benzersiz yardım kodu ile yardım talebi oluşturma
+  async createWithHelpCode(
+    createAidRequestDto: CreateAidRequestDto,
+    userId: number,
+  ) {
+    if (createAidRequestDto.organizationId) {
+      const organization = await this.prismaService.organization.findUnique({
+        where: { id: createAidRequestDto.organizationId },
+      });
+
+      if (!organization) {
+        throw new NotFoundException(
+          `Organizasyon bulunamadı. ID: ${createAidRequestDto.organizationId}`,
+        );
+      }
+    }
+
+    // Benzersiz bir yardım kodu oluştur (10 karakter uzunluğunda)
+    const helpCode = nanoid(10);
+
+    const aidRequest = await this.prismaService.aidRequest.create({
+      data: {
+        type: createAidRequestDto.type,
+        description: createAidRequestDto.description,
+        status: createAidRequestDto.status || 'pending',
+        organization: createAidRequestDto.organizationId
+          ? { connect: { id: createAidRequestDto.organizationId } }
+          : undefined,
+        user: {
+          connect: { id: userId },
+        },
+        location: {
+          create: {
+            latitude: createAidRequestDto.latitude,
+            longitude: createAidRequestDto.longitude,
+          },
+        },
+        recurring: createAidRequestDto.recurring || false,
+        isUrgent: createAidRequestDto.isUrgent || false,
+        helpCode: helpCode, // Benzersiz yardım kodunu ayrı bir alanda saklıyoruz
+      },
+    });
+
+    return {
+      ...aidRequest,
+      helpCode, // Yanıtta yardım kodunu döndür
+    };
+  }
+
+  // Yardım kodunu kullanarak mevcut bir yardım talebine konum bilgisi ekleme
+  async addLocationToAidRequest(
+    helpCode: string,
+    latitude: number,
+    longitude: number,
+  ) {
+    // HelpCode alanında yardım kodunu ara
+    const aidRequest = await this.prismaService.aidRequest.findFirst({
+      where: {
+        helpCode: helpCode,
+      },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(
+        `Geçerli bir yardım kodu bulunamadı: ${helpCode}`,
+      );
+    }
+
+    // Konum oluştur
+    const location = await this.prismaService.location.create({
+      data: {
+        latitude,
+        longitude,
+      },
+    });
+
+    // Yardım talebini güncelle ve konumu bağla
+    const updatedRequest = await this.prismaService.aidRequest.update({
+      where: { id: aidRequest.id },
+      data: {
+        locationId: location.id,
+        // Gerçek QR kod oluştur
+        qrCodeUrl: await QRCode.toDataURL(`aidRequest:${aidRequest.id}`),
+      },
+      include: {
+        location: true,
+        user: true,
+        organization: true,
+      },
+    });
+
+    return updatedRequest;
   }
 
   async updateStatus(
