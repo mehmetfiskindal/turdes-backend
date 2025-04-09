@@ -9,7 +9,7 @@ import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 import * as QRCode from 'qrcode';
-import { nanoid } from 'nanoid/non-secure';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AidRequestsService {
@@ -172,8 +172,8 @@ export class AidRequestsService {
       }
     }
 
-    // Benzersiz bir yardım kodu oluştur (10 karakter uzunluğunda)
-    const helpCode = nanoid(10);
+    // Benzersiz bir yardım kodu oluştur
+    const helpCode = uuidv4().substring(0, 10);
 
     const aidRequest = await this.prismaService.aidRequest.create({
       data: {
