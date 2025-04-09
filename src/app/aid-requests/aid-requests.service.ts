@@ -9,7 +9,7 @@ import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
 import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
 import * as QRCode from 'qrcode';
-import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid/non-secure';
 
 @Injectable()
 export class AidRequestsService {
