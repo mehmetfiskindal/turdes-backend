@@ -88,6 +88,40 @@ export class AidRequestsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new aid request with help code' })
+  @ApiResponse({
+    status: 201,
+    description:
+      'The aid request has been successfully created with a help code.',
+  })
+  @ApiBody({ type: CreateAidRequestDto })
+  @Post('with-help-code')
+  async createWithHelpCode(
+    @Body() createAidRequestDto: CreateAidRequestDto,
+    @Req() req: RequestWithUser,
+  ) {
+    try {
+      const userId = req.user.id;
+      const aidRequest = await this.aidRequestsService.createWithHelpCode(
+        createAidRequestDto,
+        userId,
+      );
+      return aidRequest; // helpCode bilgisini içerecek
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        error.message || 'Yardım talebi oluşturulurken bir hata oluştu',
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @CheckPolicies((ability) => ability.can(Action.Read, 'AidRequest'))
   @Roles(Role.User)
   @ApiOperation({ summary: 'Get a specific aid request by ID' })

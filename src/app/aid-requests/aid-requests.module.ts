@@ -10,5 +10,6 @@ import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
   imports: [],
   providers: [AidRequestsService, PrismaService, FirebaseAdminService],
   controllers: [AidRequestsController],
+  exports: [AidRequestsService], // AidRequestsService'i dışa aktar
 })
 export class AidRequestsModule {}
