@@ -55,6 +55,7 @@ model AidRequest {
   recurring      Boolean       @default(false)
   verified       Boolean       @default(false)
   reported       Boolean       @default(false)
+  helpCode       String?       @db.VarChar(255)
 }
 
 model Organization {
