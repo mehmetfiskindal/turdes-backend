@@ -194,7 +194,7 @@ export class AidRequestsService {
         },
         recurring: createAidRequestDto.recurring || false,
         isUrgent: createAidRequestDto.isUrgent || false,
-        qrCodeUrl: helpCode, // Geçici olarak yardım kodunu QR kod URL'si alanında saklayacağız
+        helpCode: helpCode, // Benzersiz yardım kodunu ayrı bir alanda saklıyoruz
       },
     });
 
@@ -210,10 +210,10 @@ export class AidRequestsService {
     latitude: number,
     longitude: number,
   ) {
-    // QR kod URL'si alanında yardım kodunu ara
+    // HelpCode alanında yardım kodunu ara
     const aidRequest = await this.prismaService.aidRequest.findFirst({
       where: {
-        qrCodeUrl: helpCode,
+        helpCode: helpCode,
       },
     });
 

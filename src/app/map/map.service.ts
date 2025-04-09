@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AidRequestsService } from '../aid-requests/aid-requests.service';
 
 @Injectable()
 export class MapService {
+  private readonly logger = new Logger(MapService.name);
   constructor(
     private prisma: PrismaService,
     private aidRequestsService: AidRequestsService,
@@ -114,8 +115,8 @@ export class MapService {
     userId: number,
   ) {
     try {
-      console.log('Gelen userId:', userId);
-      console.log('Gelen veri:', data);
+      this.logger.debug(`Gelen userId: ${userId}`);
+      Logger.log(`Gelen veri: ${JSON.stringify(data)}`, 'MapService');
 
       // Önce konum oluştur
       const location = await this.prisma.location.create({
@@ -124,8 +125,8 @@ export class MapService {
           longitude: data.longitude,
         },
       });
-
-      console.log('Oluşturulan konum:', location);
+      this.logger.log(`Created location: ${JSON.stringify(location)}`);
+      this.logger.debug(`Oluşturulan konum: ${JSON.stringify(location)}`);
 
       // Yardım talebi oluştur ve konumla ilişkilendir
       const aidRequest = await this.prisma.aidRequest.create({
@@ -147,10 +148,15 @@ export class MapService {
         },
       });
 
-      console.log('Oluşturulan yardım talebi:', aidRequest);
+      this.logger.debug(
+        `Oluşturulan yardım talebi: ${JSON.stringify(aidRequest)}`,
+      );
       return aidRequest;
     } catch (error) {
-      console.error('Yardım talebi oluşturma hatası:', error);
+      this.logger.error(
+        `Yardım talebi oluşturma hatası: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
