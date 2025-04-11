@@ -249,3 +249,54 @@ model Task {
   longitude    Float
   TaskAssignment TaskAssignment[]
 }
+
+enum StakeholderType {
+  INDIVIDUAL_DONOR
+  CORPORATE_SPONSOR
+  FOUNDATION
+  BENEFICIARY
+  OTHER
+}
+
+enum EngagementLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Stakeholder {
+  id            String          @id @default(cuid())
+  type          StakeholderType
+  name          String
+  contactPerson String?
+  email         String          @unique
+  phone         String?
+  address       String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  interactions Interaction[]
+
+  // New fields for data collection and personalization
+  donationHistory Json?           // Store donation history as JSON
+  preferences     Json?           // Store communication preferences, etc.
+  lastContacted   DateTime?       // Track the last contact date
+  engagementLevel EngagementLevel? // Track engagement level
+}
+
+enum InteractionType {
+  EMAIL
+  PHONE_CALL
+  MEETING
+  EVENT
+  OTHER
+}
+
+model Interaction {
+  id               String          @id @default(cuid())
+  type             InteractionType
+  date             DateTime
+  notes            String
+  recordedByUserId String? // Optional: If you track which user recorded the interaction
+  stakeholderId    String
+  stakeholder      Stakeholder     @relation(fields: [stakeholderId], references: [id])
+}

@@ -19,6 +19,8 @@ import { DonorsModule } from './donors/donors.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MapModule } from './map/map.module';
+import { StakeholderModule } from './stakeholder/stakeholder.module';
+import { InteractionModule } from './interaction/interaction.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { MapModule } from './map/map.module';
     DonorsModule,
     CampaignsModule,
     MapModule,
+    StakeholderModule,
+    InteractionModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

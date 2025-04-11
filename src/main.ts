@@ -22,11 +22,28 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('Turdes API')
-    .setDescription('The Turdes API description')
+    .setTitle('Turdes Backend API')
+    .setDescription(
+      'Turdes Yardım Yönetim Sistemi için REST API dokümantasyonu',
+    )
     .setVersion('1.0')
-    .addTag('turdes')
-    .addBearerAuth()
+    .addTag('auth', 'Kimlik doğrulama ve yetkilendirme')
+    .addTag('aid-requests', 'Yardım talepleri')
+    .addTag('campaigns', 'Kampanyalar')
+    .addTag('donors', 'Bağışçı yönetimi')
+    .addTag('volunteers', 'Gönüllü yönetimi')
+    .addTag('organizations', 'Organizasyon yönetimi')
+    .addTag('stakeholder', 'Paydaş yönetimi')
+    .addTag('interaction', 'Paydaş etkileşimleri')
+    .addTag('reports', 'Raporlar')
+    .addTag('education', 'Eğitim içerikleri')
+    .addTag('faq', 'Sık sorulan sorular')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'JWT token ile kimlik doğrulama kullanın',
+    })
     .build();
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
@@ -34,7 +51,16 @@ async function bootstrap() {
   app.setViewEngine('hbs');
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Swagger arayüzünü 'api/docs' yolunda servis et, böylece normal API endpoint'lerinden ayrılmış olur
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Sayfa yenilendikten sonra auth bilgilerini koru
+      docExpansion: 'none', // Başlangıçta tüm endpoint'leri kapalı tut
+      tagsSorter: 'alpha', // API tag'lerini alfabetik olarak sırala
+      operationsSorter: 'alpha', // İşlemleri alfabetik olarak sırala
+      filter: true, // Arama filtreleme özelliğini aktif et
+    },
+  });
   await app.listen(3000);
 }
 bootstrap();

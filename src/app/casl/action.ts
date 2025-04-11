@@ -9,4 +9,5 @@ export enum Action {
   Read = 'read',
   Update = 'update',
   Delete = 'delete',
+  Create = 'create', // Add Create action
 }
