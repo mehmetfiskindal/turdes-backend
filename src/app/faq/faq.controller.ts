@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Controller,
   Get,
@@ -10,6 +11,7 @@ import {
 import { FaqService } from './faq.service';
 import { CreateFaqDto } from './dto/create-faq.dto';
 
+@ApiTags('faq')
 @Controller('faq')
 export class FaqController {
   constructor(private readonly faqService: FaqService) {}

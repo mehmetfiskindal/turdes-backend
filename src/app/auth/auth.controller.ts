@@ -18,7 +18,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Response } from 'express';
 
 @Controller('auth')
-@ApiTags('Authentication')
+@ApiTags('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
