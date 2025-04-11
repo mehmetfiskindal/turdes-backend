@@ -94,4 +94,32 @@ export class CampaignService {
       throw error;
     }
   }
+
+  async getCampaignProgress(campaignId: string) {
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { goalAmount: true },
+    });
+
+    if (!campaign || !campaign.goalAmount) {
+      throw new NotFoundException(
+        `Campaign with ID ${campaignId} not found or has no goal amount`,
+      );
+    }
+
+    const totalRaised = await this.prisma.donation.aggregate({
+      where: { campaignId, status: 'COMPLETED' },
+      _sum: { amount: true },
+    });
+
+    const raisedAmount = Number(totalRaised._sum.amount) || 0;
+    const goalAmount = Number(campaign.goalAmount);
+    const percentageAchieved = (raisedAmount / goalAmount) * 100;
+
+    return {
+      goalAmount,
+      totalRaised: raisedAmount,
+      percentageAchieved: Math.min(percentageAchieved, 100),
+    };
+  }
 }

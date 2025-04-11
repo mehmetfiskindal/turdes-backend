@@ -101,4 +101,15 @@ export class CampaignController {
   remove(@Param('id') id: string) {
     return this.campaignService.remove(id);
   }
+
+  @Get(':id/progress')
+  @ApiOperation({ summary: 'Get campaign progress' })
+  @ApiResponse({
+    status: 200,
+    description: 'Campaign progress retrieved successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Campaign not found.' })
+  async getCampaignProgress(@Param('id') id: string) {
+    return this.campaignService.getCampaignProgress(id);
+  }
 }
