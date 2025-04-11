@@ -41,14 +41,17 @@ export class DonorsService {
     try {
       return await this.prisma.donation.create({
         data: {
-          amount,
-          donor: {
-            connect: { id: donorId },
-          },
-          user: {
-            connect: { id: userId },
-          },
+          amount: String(amount), // Decimal tipine uygun olarak string'e dönüştür
           anonymous,
+          status: 'COMPLETED', // Varsayılan durum
+          paymentMethod: 'CASH', // Varsayılan ödeme yöntemi
+          donationDate: new Date(), // Bağış tarihi
+          legacyUser: {
+            connect: { id: Number(userId) },
+          },
+          legacyDonor: {
+            connect: { id: Number(donorId) },
+          },
         },
       });
     } catch (error) {
@@ -75,7 +78,7 @@ export class DonorsService {
 
   async findUserDonations(userId: string) {
     return this.prisma.donation.findMany({
-      where: { userId: Number(userId) },
+      where: { legacyUserId: Number(userId) }, // userId yerine legacyUserId kullan
       include: {
         donor: {
           select: {
@@ -91,7 +94,7 @@ export class DonorsService {
 
   async findDonationById(id: string, user: any) {
     const donation = await this.prisma.donation.findUnique({
-      where: { id: parseInt(id) },
+      where: { id }, // ID artık string tipinde olduğu için dönüşüm yapmıyoruz
       include: {
         donor: {
           select: {
@@ -114,7 +117,7 @@ export class DonorsService {
     }
 
     // Kullanıcı sadece kendi bağışını görebilir
-    if (donation.userId !== user.id) {
+    if (donation.legacyUserId !== user.id) {
       throw new ForbiddenException('Bu bağışı görüntüleme izniniz yok');
     }
 
@@ -128,7 +131,7 @@ export class DonorsService {
         id: true,
         amount: true,
         createdAt: true,
-        userId: true,
+        legacyUserId: true, // userId yerine legacyUserId kullanıyoruz
         // Exclude donor personal information
         donor: {
           select: {
@@ -146,11 +149,11 @@ export class DonorsService {
     });
 
     const totalAmount = allDonations.reduce(
-      (sum, donation) => sum + donation.amount,
+      (sum, donation) => sum + Number(donation.amount),
       0,
     );
     const anonymousAmount = anonymousDonations.reduce(
-      (sum, donation) => sum + donation.amount,
+      (sum, donation) => sum + Number(donation.amount),
       0,
     );
 

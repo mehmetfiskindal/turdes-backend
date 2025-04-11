@@ -16,11 +16,11 @@ import { HistoryModule } from './history/history.module';
 import { FaqModule } from './faq/faq.module';
 import { EducationModule } from './education/education.module';
 import { DonorsModule } from './donors/donors.module';
-import { CampaignsModule } from './campaigns/campaigns.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MapModule } from './map/map.module';
 import { StakeholderModule } from './stakeholder/stakeholder.module';
 import { InteractionModule } from './interaction/interaction.module';
+import { CampaignModule } from './campaign/campaign.module';
 
 @Module({
   imports: [
@@ -39,10 +39,11 @@ import { InteractionModule } from './interaction/interaction.module';
     FaqModule,
     EducationModule,
     DonorsModule,
-    CampaignsModule,
+    CampaignModule,
     MapModule,
     StakeholderModule,
     InteractionModule,
+    DonorsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

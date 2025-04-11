@@ -141,29 +141,74 @@ model Donor {
   donations Donation[]
 }
 
+enum PaymentMethod {
+  CREDIT_CARD
+  BANK_TRANSFER
+  CASH
+  ONLINE_PLATFORM
+  SMS
+}
+
+enum DonationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
 model Donation {
-  id        Int      @id @default(autoincrement())
-  amount    Float
-  donorId   Int
-  userId    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  donor     Donor    @relation(fields: [donorId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-  anonymous Boolean  @default(false)
+  id            String         @id @default(cuid())
+  amount        Decimal
+  donationDate  DateTime       @default(now())
+  paymentMethod PaymentMethod
+  status        DonationStatus @default(PENDING)
+  donorId       String?
+  campaignId    String?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  donor         Stakeholder?   @relation(fields: [donorId], references: [id])
+  campaign      Campaign?      @relation(fields: [campaignId], references: [id])
+  anonymous     Boolean        @default(false)
+  
+  // Eski ilişkiler için geçici alanlar (migration için)
+  legacyDonorId Int?
+  legacyUserId  Int?
+  legacyDonor   Donor?         @relation(fields: [legacyDonorId], references: [id])
+  legacyUser    User?          @relation(fields: [legacyUserId], references: [id])
+}
+
+enum CampaignType {
+  ONLINE
+  EVENT
+  CROWDFUNDING
+  PEER_TO_PEER
+  SMS
+  GRANT
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
 
 model Campaign {
-  id             Int          @id @default(autoincrement())
-  name           String       @db.VarChar(255)
-  description    String
+  id             String        @id @default(cuid())
+  name           String       
+  description    String?
+  goalAmount     Decimal?
+  startDate      DateTime?
+  endDate        DateTime?
+  type           CampaignType
+  status         CampaignStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   organizationId Int
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  endDate        DateTime
-  targetAmount   Float
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
   events         Event[]
+  donations      Donation[]    // Bir kampanyaya birden çok bağış yapılabilir
 }
 
 model Event {
@@ -172,7 +217,7 @@ model Event {
   description    String
   date           DateTime
   location       String
-  campaignId     Int
+  campaignId     String
   organizationId Int
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -274,7 +319,8 @@ model Stakeholder {
   address       String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  interactions Interaction[]
+  interactions  Interaction[]
+  donations     Donation[]      // Stakeholder'ın birden çok bağışı olabilir
 
   // New fields for data collection and personalization
   donationHistory Json?           // Store donation history as JSON

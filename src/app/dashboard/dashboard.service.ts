@@ -155,11 +155,11 @@ export class DashboardService {
       });
 
       const totalAmount = donations.reduce(
-        (sum, donation) => sum + donation.amount,
+        (sum, donation) => sum + Number(donation.amount),
         0,
       );
       const anonymousAmount = anonymousDonations.reduce(
-        (sum, donation) => sum + donation.amount,
+        (sum, donation) => sum + Number(donation.amount),
         0,
       );
 
