@@ -30,6 +30,7 @@ model User {
   MessageSender   Message[]      @relation("MessageSender")
   Message         Message[]
   notifications   Notification[]
+  assignedTasks   Task[]         @relation("AssignedTasks")
   isEmailVerified Boolean       @default(false)
   verificationToken String?    @db.VarChar(255)
   tokenExpiresAt   DateTime?      @db.Timestamptz(6)
@@ -277,21 +278,43 @@ model Address {
 model TaskAssignment {
   id          Int       @id @default(autoincrement())
   volunteerId Int
-  taskId      Int
+  taskId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   task        Task      @relation(fields: [taskId], references: [id])
   volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
 }
 
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model Task {
-  id             Int              @id @default(autoincrement())
-  name           String           @db.VarChar(255)
-  description    String
+  id             String           @id @default(cuid())
+  title          String           @db.VarChar(255)
+  description    String?
+  dueDate        DateTime?
+  status         TaskStatus       @default(PENDING)
+  priority       TaskPriority     @default(MEDIUM)
+  stakeholderId  String?
+  assignedUserId Int?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  latitude     Float
-  longitude    Float
+  
+  // İlişkiler
+  stakeholder    Stakeholder?     @relation(fields: [stakeholderId], references: [id])
+  assignedUser   User?            @relation("AssignedTasks", fields: [assignedUserId], references: [id])
+  
+  // Eski ilişkiler için (mevcut TaskAssignment)
   TaskAssignment TaskAssignment[]
 }
 
@@ -323,6 +346,7 @@ model Stakeholder {
   donations     Donation[]      // Stakeholder'ın birden çok bağışı olabilir
   customFields  StakeholderCustomField[] // Özel alanlar ilişkisi
   tags          StakeholderTag[]  // Etiketler ile ilişki
+  tasks         Task[]          // Paydaş ile ilişkili görevler
 
   // New fields for data collection and personalization
   donationHistory Json?           // Store donation history as JSON

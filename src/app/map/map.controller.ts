@@ -122,25 +122,55 @@ export class MapController {
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(Role.Admin, Role.OrganizationOwner)
   @ApiResponse({ description: 'Harita bölgesindeki görevler' })
-  @ApiQuery({ name: 'north', type: Number, required: true })
-  @ApiQuery({ name: 'south', type: Number, required: true })
-  @ApiQuery({ name: 'east', type: Number, required: true })
-  @ApiQuery({ name: 'west', type: Number, required: true })
-  async getTasks(
+  // NOT: Task modelindeki değişiklikler nedeniyle konum bilgileri şu anda kullanılmıyor
+  // İlerisi için konum parametreleri şu an belgelenmiş ancak kullanılmıyor
+  @ApiQuery({
+    name: 'north',
+    type: Number,
+    required: false,
+    description:
+      'Şu anda kullanılmıyor - Task modeli güncellendikten sonra aktif hale gelecek',
+  })
+  @ApiQuery({
+    name: 'south',
+    type: Number,
+    required: false,
+    description:
+      'Şu anda kullanılmıyor - Task modeli güncellendikten sonra aktif hale gelecek',
+  })
+  @ApiQuery({
+    name: 'east',
+    type: Number,
+    required: false,
+    description:
+      'Şu anda kullanılmıyor - Task modeli güncellendikten sonra aktif hale gelecek',
+  })
+  @ApiQuery({
+    name: 'west',
+    type: Number,
+    required: false,
+    description:
+      'Şu anda kullanılmıyor - Task modeli güncellendikten sonra aktif hale gelecek',
+  })
+  async getTasks /* Query parametreleri geçici olarak devre dışı bırakıldı
     @Query('north') north: number,
     @Query('south') south: number,
     @Query('east') east: number,
     @Query('west') west: number,
-  ) {
-    // String olarak gelen değerleri sayıya çevirme
+    */() {
+    // Konum bilgilerini kullanma işlemleri geçici olarak devre dışı
+    // Task modeli güncellendiğinde, aşağıdaki kodu aktif hale getirin
+    /*
     const bounds = {
-      north: parseFloat(north as any),
-      south: parseFloat(south as any),
-      east: parseFloat(east as any),
-      west: parseFloat(west as any),
+      north: parseFloat(north),
+      south: parseFloat(south),
+      east: parseFloat(east),
+      west: parseFloat(west),
     };
+    */
 
-    const tasks = await this.mapService.getTasksForMap(bounds);
+    // Artık bounds parametresi gönderilmiyor çünkü Task modeli konum bilgilerini içermiyor
+    const tasks = await this.mapService.getTasksForMap();
 
     return {
       success: true,

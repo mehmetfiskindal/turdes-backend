@@ -39,7 +39,6 @@ export class PrismaService
     if (!this.isConnected) {
       await this.$connect();
       this.isConnected = true;
-      console.log('PrismaService: Database bağlantısı kuruldu');
     }
   }
 

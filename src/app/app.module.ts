@@ -22,6 +22,9 @@ import { StakeholderModule } from './stakeholder/stakeholder.module';
 import { InteractionModule } from './interaction/interaction.module';
 import { CampaignModule } from './campaign/campaign.module';
 import { CustomFieldModule } from './custom-field/custom-field.module';
+import { TaskModule } from './task/task.module';
+import { TaskService } from './task/task.service';
+import { TaskController } from './task/task.controller';
 
 @Module({
   imports: [
@@ -46,8 +49,9 @@ import { CustomFieldModule } from './custom-field/custom-field.module';
     InteractionModule,
     DonorsModule,
     CustomFieldModule,
+    TaskModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, PrismaService],
+  controllers: [AppController, TaskController],
+  providers: [AppService, PrismaService, TaskService],
 })
 export class AppModule {}

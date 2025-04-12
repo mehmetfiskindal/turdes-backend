@@ -162,26 +162,24 @@ export class MapService {
   }
 
   /**
-   * Belirli bir konumun çevresindeki görevleri/etkinlikleri harita için getirir
-   * @param bounds Harita görünüm alanı sınırları: {north, south, east, west}
+   * Görevleri/etkinlikleri harita için getirir
+   * NOT: Konum filtresi şu anda devre dışı bırakıldı. Task modeli güncellendikten sonra düzeltilecek
+   * @param bounds KULLANILMIYOR - Konum bilgileri artık Task modelinde yok
    */
-  async getTasksForMap(bounds: {
+  async getTasksForMap(/* bounds: {
     north: number;
     south: number;
     east: number;
     west: number;
-  }) {
+  } */) {
+    // Yeni Task modelinde latitude ve longitude doğrudan yer almadığından
+    // geçici olarak tüm görevleri getiriyoruz
+    // TODO: Konum bilgilerinin saklanacağı yeni bir alan eklenmelidir
     return this.prisma.task.findMany({
-      where: {
-        latitude: { lte: bounds.north, gte: bounds.south },
-        longitude: { lte: bounds.east, gte: bounds.west },
-      },
       select: {
         id: true,
-        name: true,
+        title: true, // 'name' yerine 'title' kullanılıyor
         description: true,
-        latitude: true,
-        longitude: true,
         TaskAssignment: {
           select: {
             volunteer: {

@@ -50,7 +50,7 @@ export class VolunteersService {
 
     // Görevin varlığını kontrol et
     const task = await this.prisma.task.findUnique({
-      where: { id: assignTaskDto.taskId },
+      where: { id: String(assignTaskDto.taskId) }, // number'dan string'e dönüştürüyoruz
     });
 
     if (!task) {
@@ -63,7 +63,7 @@ export class VolunteersService {
     const existingAssignment = await this.prisma.taskAssignment.findFirst({
       where: {
         volunteerId: assignTaskDto.volunteerId,
-        taskId: assignTaskDto.taskId,
+        taskId: String(assignTaskDto.taskId), // number'dan string'e dönüştürüyoruz
       },
     });
 
@@ -77,7 +77,7 @@ export class VolunteersService {
       return await this.prisma.taskAssignment.create({
         data: {
           volunteerId: assignTaskDto.volunteerId,
-          taskId: assignTaskDto.taskId,
+          taskId: String(assignTaskDto.taskId), // number'dan string'e dönüştürüyoruz
         },
       });
     } catch (error) {
