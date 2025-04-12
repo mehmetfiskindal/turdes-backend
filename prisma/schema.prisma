@@ -322,6 +322,7 @@ model Stakeholder {
   interactions  Interaction[]
   donations     Donation[]      // Stakeholder'ın birden çok bağışı olabilir
   customFields  StakeholderCustomField[] // Özel alanlar ilişkisi
+  tags          StakeholderTag[]  // Etiketler ile ilişki
 
   // New fields for data collection and personalization
   donationHistory Json?           // Store donation history as JSON
@@ -379,4 +380,26 @@ model StakeholderCustomField {
 
   @@index([stakeholderId])
   @@index([fieldDefinitionId])
+}
+
+// Yeni Tag modeli
+model Tag {
+  id         String           @id @default(cuid())
+  name       String           @unique
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  stakeholders StakeholderTag[] // Etiket ile ilişkili paydaşlar
+}
+
+// Stakeholder ve Tag arasında çoka çok ilişki için ara tablo
+model StakeholderTag {
+  stakeholderId String
+  tagId         String
+  assignedAt    DateTime       @default(now())
+  stakeholder   Stakeholder    @relation(fields: [stakeholderId], references: [id])
+  tag           Tag            @relation(fields: [tagId], references: [id])
+
+  @@id([stakeholderId, tagId])
+  @@index([stakeholderId])
+  @@index([tagId])
 }

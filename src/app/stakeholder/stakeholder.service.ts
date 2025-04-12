@@ -6,11 +6,13 @@ import {
 import { PrismaService } from '../prisma/prisma.service'; // PrismaService yolunu doğrulayın
 import { CreateStakeholderDto } from './dto/create-stakeholder.dto';
 import { UpdateStakeholderDto } from './dto/update-stakeholder.dto';
+import { FindSegmentedStakeholdersDto } from './dto/find-segmented-stakeholders.dto';
 import {
   Stakeholder,
   Interaction,
   CustomFieldType,
   StakeholderCustomField,
+  Prisma,
 } from '@prisma/client'; // Import necessary types
 
 @Injectable()
@@ -202,5 +204,157 @@ export class StakeholderService {
     });
 
     return customFields;
+  }
+
+  /**
+   * Paydaşları segmentlere ayırarak filtreler ve getirir
+   * @param filters - Segmentasyon filtreleri
+   * @returns Filtrelenmiş paydaşlar ve toplam kayıt sayısı
+   */
+  async findSegmentedStakeholders(filters: FindSegmentedStakeholdersDto) {
+    const {
+      type,
+      tagIds,
+      totalDonationAmount,
+      lastDonationDate,
+      locationKeyword,
+      customFields,
+      page = 1,
+      limit = 10,
+    } = filters;
+
+    // Temel where koşulları
+    const where: Prisma.StakeholderWhereInput = {};
+
+    // Tip filtrelemesi
+    if (type) {
+      // type string'ini StakeholderType enum değerine çeviriyoruz
+      where.type = type as unknown as Prisma.EnumStakeholderTypeFilter;
+    }
+
+    // Etiket filtrelemesi (some ilişkisi)
+    if (tagIds && tagIds.length > 0) {
+      where.tags = {
+        some: {
+          tagId: {
+            in: tagIds,
+          },
+        },
+      };
+    }
+
+    // Konum filtrelemesi
+    if (locationKeyword) {
+      where.address = {
+        contains: locationKeyword,
+        mode: 'insensitive', // Case insensitive arama
+      };
+    }
+
+    // Özel alan filtreleri
+    if (customFields && customFields.length > 0) {
+      where.customFields = {
+        some: {
+          OR: customFields.map((cf) => ({
+            AND: [
+              {
+                fieldDefinition: {
+                  fieldName: cf.fieldName,
+                },
+              },
+              {
+                value: {
+                  contains: cf.value,
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          })),
+        },
+      };
+    }
+
+    // Bağış miktarı aralığı filtreleri
+    // Not: Bu kısım JSON alanına veya aggregate sorgusu ile yapılabilir
+    const donationFilters: Prisma.DonationWhereInput = {}; // Bağış tarih aralığı filtreleri
+    if (lastDonationDate?.start || lastDonationDate?.end) {
+      donationFilters.donationDate = {};
+
+      if (lastDonationDate.start) {
+        donationFilters.donationDate.gte = lastDonationDate.start;
+      }
+
+      if (lastDonationDate.end) {
+        donationFilters.donationDate.lte = lastDonationDate.end;
+      }
+    }
+
+    // Toplam bağış miktarı filtreleri için paydaşlarla birlikte bağışları da getirelim
+    // Daha sonra JS tarafında filtreleme yapacağız
+    const stakeholders = await this.prisma.stakeholder.findMany({
+      where,
+      include: {
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+        donations: {
+          where: donationFilters,
+        },
+        customFields: {
+          include: {
+            fieldDefinition: true,
+          },
+        },
+      },
+      // Sayfalama için
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    // Toplam kayıt sayısı
+    const total = await this.prisma.stakeholder.count({ where });
+
+    // Eğer bağış miktarı filtresi varsa, JS tarafında filtreleme yapalım
+    let filteredStakeholders = stakeholders;
+
+    if (
+      totalDonationAmount?.min !== undefined ||
+      totalDonationAmount?.max !== undefined
+    ) {
+      filteredStakeholders = stakeholders.filter((stakeholder) => {
+        const totalAmount = stakeholder.donations.reduce(
+          (sum, donation) => sum + Number(donation.amount),
+          0,
+        );
+
+        if (
+          totalDonationAmount.min !== undefined &&
+          totalAmount < totalDonationAmount.min
+        ) {
+          return false;
+        }
+
+        if (
+          totalDonationAmount.max !== undefined &&
+          totalAmount > totalDonationAmount.max
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    return {
+      data: filteredStakeholders,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

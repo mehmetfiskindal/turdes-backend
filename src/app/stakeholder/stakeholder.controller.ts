@@ -10,11 +10,14 @@ import {
   UsePipes,
   UseGuards,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { StakeholderService } from './stakeholder.service';
 import { CreateStakeholderDto } from './dto/create-stakeholder.dto';
 import { UpdateStakeholderDto } from './dto/update-stakeholder.dto';
 import { CustomFieldValueDto } from './dto/custom-field-value.dto';
+import { FindSegmentedStakeholdersDto } from './dto/find-segmented-stakeholders.dto';
+import { FilterStakeholdersQueryDto } from './dto/filter-stakeholders-query.dto';
 import {
   Stakeholder,
   Interaction,
@@ -74,11 +77,15 @@ export class StakeholderController {
   @CheckPolicies((ability: AppAbility) =>
     ability.can(Action.Read, 'Stakeholder'),
   ) // Yetki kontrolü ('Stakeholder' string'i kullanıldı)
-  @ApiOperation({ summary: 'Tüm paydaşları listele' }) // Operasyon özeti
+  @ApiOperation({ summary: 'Paydaşları filtrelerle listele' }) // Operasyon özeti güncellendi
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Paydaşlar başarıyla listelendi.',
     type: [CreateStakeholderDto], // Dizi olarak DTO'yu referans göster
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz filtre parametreleri.',
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -88,7 +95,20 @@ export class StakeholderController {
     status: HttpStatus.FORBIDDEN,
     description: 'Erişim reddedildi.',
   })
-  findAll(): Promise<Stakeholder[]> {
+  findAll(
+    @Query(new ValidationPipe({ transform: true }))
+    filterDto: FilterStakeholdersQueryDto,
+  ) {
+    // Eğer herhangi bir filtre parametresi verilmişse, segmentasyon metodunu kullan
+    if (this.hasFilters(filterDto)) {
+      // Query parametrelerini segmentasyon DTO formatına dönüştür
+      const segmentationFilters = this.mapToSegmentationFilters(filterDto);
+      return this.stakeholderService.findSegmentedStakeholders(
+        segmentationFilters,
+      );
+    }
+
+    // Filtre yoksa tüm paydaşları getir
     return this.stakeholderService.findAll();
   }
 
@@ -279,5 +299,110 @@ export class StakeholderController {
       customFieldValueDto.fieldName,
       customFieldValueDto.value,
     );
+  }
+
+  @Post('segment')
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, 'Stakeholder'),
+  )
+  @ApiOperation({ summary: 'Paydaşları segmentlere göre filtrele ve getir' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paydaşlar başarıyla filtrelendi ve getirildi.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz filtre parametreleri.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Yetkisiz erişim.',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Erişim reddedildi.',
+  })
+  findSegmentedStakeholders(@Body() filters: FindSegmentedStakeholdersDto) {
+    return this.stakeholderService.findSegmentedStakeholders(filters);
+  }
+
+  /**
+   * Query parametrelerinde en az bir filtre olup olmadığını kontrol eder
+   */
+  private hasFilters(filterDto: FilterStakeholdersQueryDto): boolean {
+    return !!(
+      filterDto.type ||
+      filterDto.tagIds ||
+      filterDto.minDonationAmount ||
+      filterDto.maxDonationAmount ||
+      filterDto.lastDonationStart ||
+      filterDto.lastDonationEnd ||
+      filterDto.locationKeyword ||
+      filterDto.customFieldName
+    );
+  }
+
+  /**
+   * Query parametrelerini segmentasyon DTO formatına dönüştürür
+   */
+  private mapToSegmentationFilters(
+    query: FilterStakeholdersQueryDto,
+  ): FindSegmentedStakeholdersDto {
+    const filters: FindSegmentedStakeholdersDto = {
+      page: query.page,
+      limit: query.limit,
+    };
+
+    // Temel filtreler
+    if (query.type) {
+      filters.type = query.type;
+    }
+
+    if (query.locationKeyword) {
+      filters.locationKeyword = query.locationKeyword;
+    }
+
+    // Etiketleri virgülle ayrılmış listeden diziye dönüştür
+    if (query.tagIds) {
+      filters.tagIds = query.tagIds.split(',').map((tag) => tag.trim());
+    }
+
+    // Bağış miktarı aralığı
+    if (query.minDonationAmount || query.maxDonationAmount) {
+      filters.totalDonationAmount = {};
+
+      if (query.minDonationAmount) {
+        filters.totalDonationAmount.min = query.minDonationAmount;
+      }
+
+      if (query.maxDonationAmount) {
+        filters.totalDonationAmount.max = query.maxDonationAmount;
+      }
+    }
+
+    // Bağış tarih aralığı
+    if (query.lastDonationStart || query.lastDonationEnd) {
+      filters.lastDonationDate = {};
+
+      if (query.lastDonationStart) {
+        filters.lastDonationDate.start = query.lastDonationStart;
+      }
+
+      if (query.lastDonationEnd) {
+        filters.lastDonationDate.end = query.lastDonationEnd;
+      }
+    }
+
+    // Özel alan filtresi
+    if (query.customFieldName && query.customFieldValue) {
+      filters.customFields = [
+        {
+          fieldName: query.customFieldName,
+          value: query.customFieldValue,
+        },
+      ];
+    }
+
+    return filters;
   }
 }
