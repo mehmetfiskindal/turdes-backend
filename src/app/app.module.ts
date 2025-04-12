@@ -21,6 +21,7 @@ import { MapModule } from './map/map.module';
 import { StakeholderModule } from './stakeholder/stakeholder.module';
 import { InteractionModule } from './interaction/interaction.module';
 import { CampaignModule } from './campaign/campaign.module';
+import { CustomFieldModule } from './custom-field/custom-field.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CampaignModule } from './campaign/campaign.module';
     StakeholderModule,
     InteractionModule,
     DonorsModule,
+    CustomFieldModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

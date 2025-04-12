@@ -8,24 +8,31 @@ import {
   Delete,
   ValidationPipe,
   UsePipes,
-  UseGuards, // Ekle
-  HttpStatus, // HttpStatus'u import et
+  UseGuards,
+  HttpStatus,
 } from '@nestjs/common';
 import { StakeholderService } from './stakeholder.service';
 import { CreateStakeholderDto } from './dto/create-stakeholder.dto';
 import { UpdateStakeholderDto } from './dto/update-stakeholder.dto';
-import { Stakeholder, Interaction } from '@prisma/client'; // Interaction'ı da import et
+import { CustomFieldValueDto } from './dto/custom-field-value.dto';
+import {
+  Stakeholder,
+  Interaction,
+  StakeholderCustomField,
+} from '@prisma/client';
 import {
   ApiBearerAuth,
   ApiTags,
-  ApiOperation, // ApiOperation'ı import et
-  ApiResponse, // ApiResponse'u import et
-} from '@nestjs/swagger'; // Swagger için ekle
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // JWT Guard'ı import et
-import { PoliciesGuard } from '../casl/policies.guard'; // Policies Guard'ı import et
-import { CheckPolicies } from '../casl/check-policies.decorator'; // CheckPolicies'i import et
-import { AppAbility } from '../casl/casl-ability.factory'; // AppAbility'yi import et
-import { Action } from '../casl/action'; // Action'ı import et
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PoliciesGuard } from '../casl/policies.guard';
+import { CheckPolicies } from '../casl/check-policies.decorator';
+import { AppAbility } from '../casl/casl-ability.factory';
+import { Action } from '../casl/action';
 
 @ApiTags('stakeholder') // Swagger tag'i ekle
 @ApiBearerAuth() // Tüm endpoint'ler için JWT gerekliliğini belirt
@@ -111,9 +118,12 @@ export class StakeholderController {
     status: HttpStatus.FORBIDDEN,
     description: 'Erişim reddedildi.',
   })
-  getDetailedProfile(
-    @Param('id') id: string,
-  ): Promise<Stakeholder & { interactions: Interaction[] }> {
+  getDetailedProfile(@Param('id') id: string): Promise<
+    Stakeholder & {
+      interactions: Interaction[];
+      customFields: StakeholderCustomField[];
+    }
+  > {
     return this.stakeholderService.getDetailedStakeholderProfile(id);
   }
 
@@ -203,5 +213,71 @@ export class StakeholderController {
   })
   remove(@Param('id') id: string): Promise<Stakeholder> {
     return this.stakeholderService.remove(id);
+  }
+
+  // Özel alanlar için yeni endpoint'ler
+
+  @Get(':id/custom-fields')
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, 'Stakeholder'),
+  )
+  @ApiOperation({ summary: 'Paydaş için tüm özel alanları getir' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Özel alanlar başarıyla getirildi.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Paydaş bulunamadı.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Yetkisiz erişim.',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Erişim reddedildi.',
+  })
+  @ApiParam({ name: 'id', description: 'Paydaş ID' })
+  getCustomFields(@Param('id') id: string): Promise<StakeholderCustomField[]> {
+    return this.stakeholderService.getCustomFieldsForStakeholder(id);
+  }
+
+  @Post(':id/custom-fields')
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Update, 'Stakeholder'),
+  )
+  @ApiOperation({ summary: 'Paydaşa özel alan ekle veya güncelle' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Özel alan başarıyla eklendi veya güncellendi.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Geçersiz değer.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Paydaş veya özel alan tanımı bulunamadı.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Yetkisiz erişim.',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Erişim reddedildi.',
+  })
+  @ApiParam({ name: 'id', description: 'Paydaş ID' })
+  @ApiBody({ type: CustomFieldValueDto })
+  addOrUpdateCustomField(
+    @Param('id') id: string,
+    @Body() customFieldValueDto: CustomFieldValueDto,
+  ) {
+    return this.stakeholderService.addOrUpdateCustomFieldValue(
+      id,
+      customFieldValueDto.fieldName,
+      customFieldValueDto.value,
+    );
   }
 }

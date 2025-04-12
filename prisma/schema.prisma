@@ -321,6 +321,7 @@ model Stakeholder {
   updatedAt     DateTime        @updatedAt
   interactions  Interaction[]
   donations     Donation[]      // Stakeholder'ın birden çok bağışı olabilir
+  customFields  StakeholderCustomField[] // Özel alanlar ilişkisi
 
   // New fields for data collection and personalization
   donationHistory Json?           // Store donation history as JSON
@@ -337,6 +338,15 @@ enum InteractionType {
   OTHER
 }
 
+// Custom Field için enum tipi
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+}
+
 model Interaction {
   id               String          @id @default(cuid())
   type             InteractionType
@@ -345,4 +355,28 @@ model Interaction {
   recordedByUserId String? // Optional: If you track which user recorded the interaction
   stakeholderId    String
   stakeholder      Stakeholder     @relation(fields: [stakeholderId], references: [id])
+}
+
+model CustomFieldDefinition {
+  id              String             @id @default(cuid())
+  fieldName       String             @unique
+  fieldType       CustomFieldType
+  options         String[]          // SELECT tipi için seçenekler
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  customFields    StakeholderCustomField[]
+}
+
+model StakeholderCustomField {
+  id                 String               @id @default(cuid())
+  value              String              // Tüm değerler başlangıçta string olarak saklanacak
+  stakeholderId      String
+  fieldDefinitionId  String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  stakeholder        Stakeholder          @relation(fields: [stakeholderId], references: [id])
+  fieldDefinition    CustomFieldDefinition @relation(fields: [fieldDefinitionId], references: [id])
+
+  @@index([stakeholderId])
+  @@index([fieldDefinitionId])
 }
