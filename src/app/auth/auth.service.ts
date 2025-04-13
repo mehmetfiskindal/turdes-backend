@@ -9,14 +9,14 @@ import * as bcrypt from 'bcrypt';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Throttle } from '@nestjs/throttler';
-import { MailerService } from '@nestjs-modules/mailer';
+import { MailService } from '../mail/mail.service'; // MailService importu ekledik
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService, // Inject MailerService
+    private readonly mailService: MailService, // Eski MailerService yerine yeni MailService
   ) {}
 
   // Register method
@@ -86,36 +86,16 @@ export class AuthService {
     }
 
     // Normal ortamda e-posta gönderimi
-    // HOST_URL değişkenini kontrol edelim ve düzgün bir URL oluşturalım
     const baseUrl =
       process.env.FRONTEND_URL || 'https://turdes-production.up.railway.app';
     const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-    await this.mailerService.sendMail({
-      from: process.env.MAIL_FROM,
-      to: user.email,
-      subject: 'Verify your email',
-      text: `Please verify your email by clicking on the following link: ${verificationUrl}
-
-This link contains both your verification token and email address to complete the verification process automatically.
-
-If you need to enter these details manually:
-- Your verification token: ${token}
-- Your email: ${user.email}`,
-      html: `
-        <h2>Email Verification</h2>
-        <p>Please verify your email by clicking on the following link:</p>
-        <p><a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p>${verificationUrl}</p>
-        <p>This link contains both your verification token and email address to complete the verification process automatically.</p>
-        <p>If you need to enter these details manually:</p>
-        <ul>
-          <li><strong>Your verification token:</strong> ${token}</li>
-          <li><strong>Your email:</strong> ${user.email}</li>
-        </ul>
-      `,
-    });
+    // Yeni MailService'i kullanarak e-posta gönderiyoruz
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      user.name || 'Değerli Kullanıcımız',
+      verificationUrl,
+    );
   }
 
   // Şifre sıfırlama e-postası gönderen metot
@@ -148,36 +128,16 @@ If you need to enter these details manually:
     }
 
     // Normal ortamda e-posta gönderimi
-    const resetUrl = `${process.env.HOST_URL}auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+    const baseUrl =
+      process.env.FRONTEND_URL || 'https://turdes-production.up.railway.app';
+    const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-    await this.mailerService.sendMail({
-      from: process.env.MAIL_FROM,
-      to: user.email,
-      subject: 'Şifre Sıfırlama İsteği',
-      text: `Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın: ${resetUrl}
-
-Bu bağlantı şifre sıfırlama işlemi için hem token hem de e-posta adresinizi içerir.
-
-Bu bilgileri manuel olarak girmeniz gerekirse:
-- Şifre sıfırlama tokeniniz: ${token}
-- E-posta adresiniz: ${user.email}
-
-Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
-      html: `
-        <h2>Şifre Sıfırlama</h2>
-        <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:</p>
-        <p><a href="${resetUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Şifremi Sıfırla</a></p>
-        <p>Veya bu URL'yi tarayıcınıza kopyalayıp yapıştırın:</p>
-        <p>${resetUrl}</p>
-        <p>Bu bağlantı şifre sıfırlama işlemi için hem token hem de e-posta adresinizi içerir.</p>
-        <p>Bu bilgileri manuel olarak girmeniz gerekirse:</p>
-        <ul>
-          <li><strong>Şifre sıfırlama tokeniniz:</strong> ${token}</li>
-          <li><strong>E-posta adresiniz:</strong> ${user.email}</li>
-        </ul>
-        <p>Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.</p>
-      `,
-    });
+    // Yeni MailService'i kullanarak şifre sıfırlama e-postası gönderiyoruz
+    await this.mailService.sendPasswordResetEmail(
+      user.email,
+      user.name || 'Değerli Kullanıcımız',
+      resetUrl,
+    );
   }
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
@@ -210,13 +170,11 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
       },
     });
 
-    // Send welcome email after successful verification
-    await this.mailerService.sendMail({
-      from: process.env.MAIL_FROM,
-      to: verifyEmailDto.email,
-      subject: 'Welcome to Our Platform!',
-      text: 'Your email has been successfully verified. Welcome to our platform!',
-    });
+    // E-posta doğrulaması başarılı olduğunda hoş geldiniz e-postası gönder
+    await this.mailService.sendWelcomeEmail(
+      user.email,
+      user.name || 'Değerli Kullanıcımız',
+    );
 
     return { message: 'Email verified successfully' };
   }
@@ -476,18 +434,15 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
       },
     });
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    const baseUrl =
+      process.env.FRONTEND_URL || 'https://turdes-production.up.railway.app';
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
-    await this.mailerService.sendMail({
-      from: process.env.MAIL_FROM,
-      to: email,
-      subject: 'Parola Sıfırlama İsteği',
-      template: 'forgot-password',
-      context: {
-        name: user.name || 'Kullanıcı',
-        resetLink: resetUrl,
-        validityDuration: '1 saat',
-      },
-    });
+    // Yeni MailService'i kullanarak şifre sıfırlama e-postası gönderiyoruz
+    await this.mailService.sendPasswordResetEmail(
+      user.email,
+      user.name || 'Değerli Kullanıcımız',
+      resetUrl,
+    );
   }
 }
