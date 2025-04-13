@@ -6,7 +6,7 @@ Turdes, yardım taleplerinin etkili bir şekilde takip edilmesini, organizasyonl
 - [Özellikler](#%C3%96zellikler)
 - [Teknoloji Yığını](#Teknoloji-Y%C4%B1%C4%9F%C4%B1n%C4%B1)
 - [Kurulum](#Kurulum)
-- [Geliştirme](#Geli%C5%9Ftirme)
+- [Geliştirme](#Geliştir)
 - [Proje Yapısı](#Proje-Yap%C4%B1s%C4%B1)
 - [API Dokümentasyonu](#API-Dok%C3%BCmentasyonu)
 - [Katkıda Bulunma](#Katk%C4%B1da-Bulunma)
@@ -33,17 +33,18 @@ Turdes, yardım taleplerinin etkili bir şekilde takip edilmesini, organizasyonl
 ### 5. Bağış ve Gönüllü Profili
 - Kullanıcılar, **yaptıkları bağışları ve gönüllü faaliyetlerini** profillerinde takip edebilir.
 
-### 6. Bağış Yönetim Sistemi
+### 6. Bağış Yönetim Sistemi (Yeni Modül)
 - Bağış yapanlara **otomatik teşekkür mesajları** gönderilir.
 - Bağışların **hangi alanlara kullanıldığı detaylı raporlarla gösterilir.**
+- Bağış toplama ve takip işlemleri için özel modül.
 
 ### 7. Mesajlaşma ve Kullanıcı Destek Sistemi
 - Kullanıcılar ve organizasyonlar **doğrudan mesajlaşabilir**.
 - Yardım talebiyle ilgili **SSS bölümü** bulunur.
 
-### 8. Yardım Kampanyaları ve Etkinlikler
-- Organizasyonlar **kampanya ve etkinlikler** oluşturabilir.
-- Kullanıcılar **kampanyalara bağış** yapabilir ve **etkinliklere katılım** sağlayabilir.
+### 8. Yardım Etkinlikleri (Kampanya Modülü Kaldırıldı)
+- Organizasyonlar **etkinlikler** oluşturabilir.
+- Kullanıcılar **etkinliklere katılım** sağlayabilir.
 
 ### 9. Yardım Geçmişi ve Takibi
 - Kullanıcılar ve organizasyonlar, **geçmişteki yardım taleplerini** görüntüleyebilir.
@@ -51,6 +52,20 @@ Turdes, yardım taleplerinin etkili bir şekilde takip edilmesini, organizasyonl
 ### 10. Analitik ve Raporlama
 - Organizasyonlar **yardım talebi ve dağıtımı ile ilgili detaylı raporlar** alabilir.
 - Kullanıcılar, **bağışları ve gönüllü aktivitelerini görsel istatistiklerle** takip edebilir.
+
+### 11. Paydaş Yönetimi (Yeni Modül)
+- Organizasyonlar, paydaşlarını (bağışçılar, gönüllüler, partnerler vb.) yönetebilir.
+- Paydaşlara **etiketler** atanabilir ve filtrelenebilir.
+- Paydaşlar için **özel alanlar** tanımlanabilir ve yönetilebilir.
+- Paydaş **etkileşim puanı** hesaplanabilir.
+- Paydaşlar için **geçici silme (soft delete)** özelliği bulunur.
+
+### 12. Etkileşim Yönetimi (Yeni Modül)
+- Paydaşlarla yapılan etkileşimlerin (toplantılar, e-postalar, aramalar) kaydı tutulabilir.
+
+### 13. Görev Yönetimi (Yeni Modül)
+- Organizasyon içinde veya gönüllülere yönelik görevler oluşturulabilir, atanabilir ve takip edilebilir.
+- Görevler filtrelenebilir ve durumu yönetilebilir.
 
 ## Teknoloji Yığını
 
@@ -137,19 +152,24 @@ src/
   │   ├─ aid-centers/       # Yardım merkezleri modülü
   │   ├─ aid-requests/      # Yardım talepleri modülü
   │   ├─ auth/              # Kimlik doğrulama modülü
-  │   ├─ campaigns/         # Kampanyalar modülü
   │   ├─ casl/              # Yetkilendirme modülü
+  │   ├─ custom-fields/     # Özel alanlar modülü (Yeni)
   │   ├─ dashboard/         # Gösterge paneli modülü
-  │   ├─ donors/            # Bağışçılar modülü
+  │   ├─ donations/         # Bağış modülü (Yeni)
+  │   ├─ donors/            # Bağışçılar modülü (Bağış modülü ile ilişkili olabilir, kontrol edilmeli)
   │   ├─ education/         # Eğitim materyalleri modülü
   │   ├─ faq/               # SSS modülü
   │   ├─ firebase/          # Firebase entegrasyonu
   │   ├─ history/           # Geçmiş kayıtlar modülü
+  │   ├─ interactions/      # Etkileşim yönetimi modülü (Yeni)
   │   ├─ map/               # Harita ve konum modülü
   │   ├─ organizations/     # Organizasyonlar modülü
   │   ├─ prisma/            # Prisma servis modülü
   │   ├─ reports/           # Raporlama modülü
   │   ├─ security/          # Güvenlik modülü
+  │   ├─ stakeholders/      # Paydaş yönetimi modülü (Yeni)
+  │   ├─ tags/              # Etiketleme modülü (Yeni)
+  │   ├─ tasks/             # Görev yönetimi modülü (Yeni)
   │   ├─ volunteers/        # Gönüllüler modülü
   │   ├─ weather/           # Hava durumu modülü
   │   └─ app.module.ts      # Ana uygulama modülü
@@ -195,10 +215,43 @@ http://localhost:3000/api
   - `POST /api/organizations/:id/messages` - Organizasyona mesaj gönderme
   - `POST /api/organizations/:id/ratings` - Organizasyon puanlama
 
-- **Bağışlar**
-  - `POST /api/donors/donations` - Bağış yapma
-  - `GET /api/donors/donations` - Bağışları listeleme
-  - `GET /api/donors/donations/statistics` - Bağış istatistiklerini görüntüleme
+- **Bağışlar (Yeni/Güncellenmiş)**
+  - `POST /api/donations` - Bağış yapma
+  - `GET /api/donations` - Bağışları listeleme
+  - `GET /api/donations/statistics` - Bağış istatistiklerini görüntüleme
+  // (Eski /api/donors/donations endpoint'leri buraya taşınmış olabilir)
+
+- **Paydaşlar (Yeni)**
+  - `GET /api/stakeholders` - Paydaşları listeleme (filtreleme ile)
+  - `POST /api/stakeholders` - Yeni paydaş oluşturma
+  - `GET /api/stakeholders/:id` - Belirli bir paydaşı görüntüleme
+  - `PATCH /api/stakeholders/:id` - Paydaşı güncelleme
+  - `DELETE /api/stakeholders/:id` - Paydaşı silme (soft delete)
+  - `GET /api/stakeholders/:id/engagement-score` - Paydaş etkileşim puanını alma
+
+- **Etkileşimler (Yeni)**
+  - `POST /api/stakeholders/:stakeholderId/interactions` - Yeni etkileşim ekleme
+  - `GET /api/stakeholders/:stakeholderId/interactions` - Paydaşın etkileşimlerini listeleme
+
+- **Görevler (Yeni)**
+  - `GET /api/tasks` - Görevleri listeleme (filtreleme ile)
+  - `POST /api/tasks` - Yeni görev oluşturma
+  - `GET /api/tasks/:id` - Belirli bir görevi görüntüleme
+  - `PATCH /api/tasks/:id` - Görevi güncelleme
+  - `DELETE /api/tasks/:id` - Görevi silme
+
+- **Etiketler (Yeni)**
+  - `POST /api/tags` - Yeni etiket oluşturma
+  - `GET /api/tags` - Etiketleri listeleme
+  - `POST /api/stakeholders/:stakeholderId/tags/:tagId` - Paydaşa etiket ekleme
+  - `DELETE /api/stakeholders/:stakeholderId/tags/:tagId` - Paydaştan etiket kaldırma
+
+- **Özel Alanlar (Yeni)**
+  - `POST /api/custom-fields` - Yeni özel alan tanımı oluşturma
+  - `GET /api/custom-fields` - Özel alan tanımlarını listeleme
+  - `PATCH /api/custom-fields/:id` - Özel alan tanımını güncelleme
+  - `DELETE /api/custom-fields/:id` - Özel alan tanımını silme
+  - `POST /api/stakeholders/:stakeholderId/custom-fields` - Paydaşa özel alan değeri ekleme/güncelleme
 
 - **Harita ve Konum Servisleri**
   - `GET /api/map/aid-centers` - Yakındaki yardım merkezlerini bulma
