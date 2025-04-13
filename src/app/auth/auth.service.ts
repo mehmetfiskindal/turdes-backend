@@ -86,7 +86,10 @@ export class AuthService {
     }
 
     // Normal ortamda e-posta gönderimi
-    const verificationUrl = `${process.env.HOST_URL}auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
+    // HOST_URL değişkenini kontrol edelim ve düzgün bir URL oluşturalım
+    const baseUrl =
+      process.env.FRONTEND_URL || 'https://turdes-production.up.railway.app';
+    const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
     await this.mailerService.sendMail({
       from: process.env.MAIL_FROM,
