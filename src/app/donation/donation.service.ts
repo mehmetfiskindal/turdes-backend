@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { UpdateDonationDto } from './dto/update-donation.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class DonationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   async recordDonation(createDonationDto: CreateDonationDto) {
     // Kampanya kontrolü (opsiyonel)
@@ -214,6 +218,16 @@ export class DonationService {
 
   async update(id: string, updateDonationDto: UpdateDonationDto) {
     try {
+      // Güncellemeden önceki bağış durumunu kontrol etmek için mevcut bağışı al
+      const existingDonation = await this.prisma.donation.findUnique({
+        where: { id },
+        select: { status: true },
+      });
+
+      if (!existingDonation) {
+        throw new NotFoundException(`Donation with ID ${id} not found`);
+      }
+
       // Kampanya kontrolü (opsiyonel)
       if (updateDonationDto.campaignId) {
         const campaign = await this.prisma.campaign.findUnique({
@@ -240,7 +254,7 @@ export class DonationService {
         }
       }
 
-      return await this.prisma.donation.update({
+      const updatedDonation = await this.prisma.donation.update({
         where: { id },
         data: {
           ...updateDonationDto,
@@ -263,6 +277,16 @@ export class DonationService {
           },
         },
       });
+
+      // Bağış durumu COMPLETED olarak güncellendiyse teşekkür e-postası gönder
+      if (
+        updateDonationDto.status === 'COMPLETED' &&
+        existingDonation.status !== 'COMPLETED'
+      ) {
+        await this.notificationService.queueThankYouEmail(id);
+      }
+
+      return updatedDonation;
     } catch (error) {
       if (error.code === 'P2025') {
         throw new NotFoundException(`Donation with ID ${id} not found`);

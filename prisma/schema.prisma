@@ -353,6 +353,8 @@ model Stakeholder {
   preferences     Json?           // Store communication preferences, etc.
   lastContacted   DateTime?       // Track the last contact date
   engagementLevel EngagementLevel? // Track engagement level
+  engagementScore Int?            // Numeric score representing engagement level (0-100)
+  isDeleted      Boolean          @default(false) // Soft delete flag
 }
 
 enum InteractionType {

@@ -288,4 +288,239 @@ export class DashboardService {
       );
     }
   }
+
+  async getTotalStakeholders() {
+    try {
+      const totalStakeholders = await this.prisma.stakeholder.count({
+        where: {},
+      });
+
+      return { totalStakeholders };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Toplam paydaş sayısı alınırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
+
+  async getNewStakeholdersThisPeriod(startDate: Date, endDate: Date) {
+    try {
+      const newStakeholdersCount = await this.prisma.stakeholder.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      });
+
+      return {
+        newStakeholdersCount,
+        period: {
+          startDate,
+          endDate,
+        },
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Belirtilen dönemdeki yeni paydaş sayısı alınırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
+
+  async getTotalDonationsAmount() {
+    try {
+      const donationAggregate = await this.prisma.donation.aggregate({
+        _sum: {
+          amount: true,
+        },
+        where: {
+          status: 'COMPLETED',
+        },
+      });
+
+      const totalCompletedDonations = await this.prisma.donation.count({
+        where: {
+          status: 'COMPLETED',
+        },
+      });
+
+      return {
+        totalAmount: donationAggregate._sum.amount || 0,
+        donationCount: totalCompletedDonations,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Toplam bağış miktarı alınırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
+
+  async getActiveCampaignsSummary() {
+    try {
+      const activeCampaigns = await this.prisma.campaign.findMany({
+        where: {
+          status: 'ACTIVE',
+          endDate: {
+            gte: new Date(),
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          startDate: true,
+          endDate: true,
+          goalAmount: true,
+          _count: {
+            select: {
+              donations: true,
+            },
+          },
+          donations: {
+            where: {
+              status: 'COMPLETED',
+            },
+            select: {
+              amount: true,
+            },
+          },
+        },
+        orderBy: {
+          endDate: 'asc',
+        },
+      });
+
+      return {
+        activeCampaignsCount: activeCampaigns.length,
+        campaigns: activeCampaigns.map((campaign) => {
+          const totalRaised = campaign.donations.reduce(
+            (sum, donation) => sum + Number(donation.amount),
+            0,
+          );
+          const progressPercentage =
+            Number(campaign.goalAmount) > 0
+              ? (totalRaised / Number(campaign.goalAmount)) * 100
+              : 0;
+
+          return {
+            id: campaign.id,
+            name: campaign.name,
+            startDate: campaign.startDate,
+            endDate: campaign.endDate,
+            target: campaign.goalAmount,
+            donationCount: campaign._count.donations,
+            totalRaised,
+            progressPercentage: Math.min(progressPercentage, 100), // Cap at 100%
+          };
+        }),
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Aktif kampanya özeti alınırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
+
+  async getUpcomingTasksCount(userId?: string) {
+    try {
+      const today = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+
+      const whereCondition: any = {
+        dueDate: {
+          gte: today,
+          lt: nextWeek,
+        },
+        isCompleted: false,
+      };
+
+      // Eğer userId belirtilmişse, sadece o kullanıcının görevlerini getir
+      if (userId) {
+        whereCondition.assignedToId = userId;
+      }
+
+      const upcomingTasks = await this.prisma.task.count({
+        where: whereCondition,
+      });
+
+      const todayTasks = await this.prisma.task.count({
+        where: {
+          ...whereCondition,
+          dueDate: {
+            gte: today,
+            lt: new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate() + 1,
+            ),
+          },
+        },
+      });
+
+      return {
+        todayTasks,
+        upcomingTasks,
+        period: {
+          start: today,
+          end: nextWeek,
+        },
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Yaklaşan görev sayısı alınırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
+
+  async getDonationsOverTime(period: 'DAY' | 'WEEK' | 'MONTH' | 'YEAR') {
+    try {
+      const today = new Date();
+      let startDate: Date;
+
+      switch (period) {
+        case 'DAY':
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - 30); // Son 30 gün
+          break;
+        case 'WEEK':
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - 90); // Son 90 gün
+          break;
+        case 'MONTH':
+          startDate = new Date(today);
+          startDate.setMonth(today.getMonth() - 12); // Son 12 ay
+          break;
+        case 'YEAR':
+          startDate = new Date(today);
+          startDate.setFullYear(today.getFullYear() - 5); // Son 5 yıl
+          break;
+        default:
+          startDate = new Date(today);
+          startDate.setMonth(today.getMonth() - 12);
+      }
+
+      // Veritabanı sorgusu için uygun formatta tarih gruplandırması kullanılmalı
+      // Burada PostgreSQL'in date_trunc fonksiyonunu kullanıyorum
+      const donationsByPeriod = await this.prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC(${period.toLowerCase()}, "createdAt") as period,
+          COUNT(*) as "donationCount",
+          SUM(amount) as "totalAmount"
+        FROM "Donation"
+        WHERE "createdAt" >= ${startDate} AND status = 'COMPLETED'
+        GROUP BY DATE_TRUNC(${period.toLowerCase()}, "createdAt")
+        ORDER BY period ASC
+      `;
+
+      return {
+        period,
+        donationsByPeriod,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Zaman içindeki bağışlar alınırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
 }

@@ -357,4 +357,168 @@ export class StakeholderService {
       },
     };
   }
+
+  /**
+   * Bir paydaşın bağlılık skorunu hesaplar
+   * @param stakeholderId - Paydaş ID'si
+   * @returns Hesaplanan bağlılık skoru (0-100 arası)
+   */
+  async calculateEngagementScore(stakeholderId: string): Promise<number> {
+    try {
+      // Paydaşın var olup olmadığını kontrol et
+      const stakeholder = await this.prisma.stakeholder.findUnique({
+        where: {
+          id: stakeholderId,
+        },
+      });
+
+      if (!stakeholder) {
+        throw new NotFoundException(`Paydaş ID'si ${stakeholderId} bulunamadı`);
+      }
+
+      // Bağışlar hakkında veri topla
+      const donations = await this.prisma.donation.findMany({
+        where: {
+          donorId: stakeholderId,
+          status: 'COMPLETED',
+        },
+        orderBy: {
+          donationDate: 'desc',
+        },
+      });
+
+      // Etkileşimler hakkında veri topla
+      const interactions = await this.prisma.interaction.findMany({
+        where: {
+          stakeholderId: stakeholderId,
+        },
+        orderBy: {
+          date: 'desc',
+        },
+      });
+
+      // Görevler hakkında veri topla
+      const tasks = await this.prisma.task.findMany({
+        where: {
+          stakeholderId: stakeholderId,
+        },
+        orderBy: {
+          dueDate: 'desc',
+        },
+      });
+
+      // Skorlama değişkenleri
+      let score = 0;
+      const now = new Date();
+      const oneYearAgo = new Date(now);
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+      // 1. Toplam bağış miktarı (max 40 puan)
+      const totalDonationAmount = donations.reduce(
+        (sum, donation) => sum + Number(donation.amount),
+        0,
+      );
+
+      // Toplam bağış miktarına göre puanlama (örneğin 10.000 TL üzeri tam puan)
+      const donationAmountScore = Math.min(totalDonationAmount / 250, 40);
+      score += donationAmountScore;
+
+      // 2. Bağış sıklığı - son 1 yıldaki bağış sayısı (max 20 puan)
+      const recentDonations = donations.filter(
+        (d) => new Date(d.donationDate) >= oneYearAgo,
+      );
+
+      // Her bir bağış 4 puan, en fazla 20 puan
+      const donationFrequencyScore = Math.min(recentDonations.length * 4, 20);
+      score += donationFrequencyScore;
+
+      // 3. Son etkileşim tarihi (max 15 puan)
+      if (interactions.length > 0) {
+        const lastInteractionDate = new Date(interactions[0].date);
+        const daysSinceLastInteraction = Math.floor(
+          (now.getTime() - lastInteractionDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+
+        // Son 30 gün içinde etkileşim varsa tam puan,
+        // 180+ gün ise 0 puan, aradaki değerler için ölçekli puanlama
+        const lastInteractionScore =
+          daysSinceLastInteraction <= 30
+            ? 15
+            : daysSinceLastInteraction >= 180
+              ? 0
+              : 15 * (1 - (daysSinceLastInteraction - 30) / 150);
+
+        score += lastInteractionScore;
+      }
+
+      // 4. Etkileşim sayısı (max 15 puan)
+      // Her etkileşim 3 puan, en fazla 15 puan
+      const interactionCountScore = Math.min(interactions.length * 3, 15);
+      score += interactionCountScore;
+
+      // 5. Tamamlanan görevler (max 10 puan)
+      const completedTasks = tasks.filter(
+        (t) => t.status === 'COMPLETED',
+      ).length;
+      // Her tamamlanan görev 2 puan, en fazla 10 puan
+      const tasksScore = Math.min(completedTasks * 2, 10);
+      score += tasksScore;
+
+      // Son skoru yuvarla (0-100 arası)
+      return Math.round(Math.min(score, 100));
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(
+        `Bağlılık skoru hesaplanırken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Bir paydaşın bağlılık skorunu hesaplar ve kaydeder
+   * @param stakeholderId - Paydaş ID'si
+   * @returns Güncellenmiş paydaş bilgileri
+   */
+  async updateEngagementScore(stakeholderId: string): Promise<Stakeholder> {
+    try {
+      // Skoru hesapla
+      const engagementScore =
+        await this.calculateEngagementScore(stakeholderId);
+
+      // Engagement Level'ı belirle
+      let engagementLevel = 'LOW';
+      if (engagementScore >= 70) {
+        engagementLevel = 'HIGH';
+      } else if (engagementScore >= 30) {
+        engagementLevel = 'MEDIUM';
+      }
+
+      // Stakeholder'ı güncelle - raw SQL kullan çünkü prisma modeli henüz engagementScore tanımıyor
+      await this.prisma.$executeRaw`
+        UPDATE "Stakeholder"
+        SET 
+          "updatedAt" = NOW(), 
+          "engagementScore" = ${engagementScore},
+          "engagementLevel" = ${engagementLevel}::text
+        WHERE "id" = ${stakeholderId}
+      `;
+
+      // Güncellenmiş paydaşı getir
+      const updatedStakeholder = await this.prisma.stakeholder.findUnique({
+        where: { id: stakeholderId },
+      });
+
+      return updatedStakeholder;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(
+        `Bağlılık skoru güncellenirken bir hata oluştu: ${error.message}`,
+      );
+    }
+  }
 }

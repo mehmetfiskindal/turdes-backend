@@ -326,6 +326,63 @@ export class StakeholderController {
     return this.stakeholderService.findSegmentedStakeholders(filters);
   }
 
+  // Bağlılık skoru hesaplama endpoint'i
+  @Get(':id/calculate-engagement')
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, 'Stakeholder'),
+  )
+  @ApiOperation({
+    summary: 'Bir paydaşın bağlılık skorunu hesapla (kaydetmeden)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Bağlılık skoru başarıyla hesaplandı.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Paydaş bulunamadı.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Yetkisiz erişim.',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Erişim reddedildi.',
+  })
+  async calculateEngagement(@Param('id') id: string) {
+    const score = await this.stakeholderService.calculateEngagementScore(id);
+    return { stakeholderId: id, engagementScore: score };
+  }
+
+  // Bağlılık skoru güncelleme endpoint'i
+  @Post(':id/update-engagement')
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Update, 'Stakeholder'),
+  )
+  @ApiOperation({
+    summary: 'Bir paydaşın bağlılık skorunu hesapla ve güncelle',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Bağlılık skoru başarıyla hesaplandı ve kaydedildi.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Paydaş bulunamadı.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Yetkisiz erişim.',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Erişim reddedildi.',
+  })
+  updateEngagement(@Param('id') id: string) {
+    return this.stakeholderService.updateEngagementScore(id);
+  }
+
   /**
    * Query parametrelerinde en az bir filtre olup olmadığını kontrol eder
    */

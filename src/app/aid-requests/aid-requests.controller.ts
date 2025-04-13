@@ -29,7 +29,7 @@ import { Action } from '../casl/action';
 import { RequestWithUser } from './interfaces/request-with-user.interface';
 import { FilterAidRequestDto } from './dto/filter-aid-request.dto';
 
-@ApiTags('aidrequests')
+@ApiTags('aid-requests')
 @Controller('aidrequests')
 export class AidRequestsController {
   constructor(private readonly aidRequestsService: AidRequestsService) {}
