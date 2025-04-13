@@ -1,5 +1,4 @@
 import * as crypto from 'crypto';
-import * as nodemailer from 'nodemailer';
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,23 +9,15 @@ import * as bcrypt from 'bcrypt';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Throttle } from '@nestjs/throttler';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService, // Inject MailerService
   ) {}
-
-  private transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
-    port: parseInt(process.env.MAIL_PORT || '587'),
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASSWORD,
-    },
-  });
 
   // Register method
   async register(userDto: UserDto) {
@@ -97,7 +88,7 @@ export class AuthService {
     // Normal ortamda e-posta gönderimi
     const verificationUrl = `${process.env.HOST_URL}auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-    await this.transporter.sendMail({
+    await this.mailerService.sendMail({
       from: process.env.MAIL_FROM,
       to: user.email,
       subject: 'Verify your email',
@@ -156,7 +147,7 @@ If you need to enter these details manually:
     // Normal ortamda e-posta gönderimi
     const resetUrl = `${process.env.HOST_URL}auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-    await this.transporter.sendMail({
+    await this.mailerService.sendMail({
       from: process.env.MAIL_FROM,
       to: user.email,
       subject: 'Şifre Sıfırlama İsteği',
@@ -217,7 +208,7 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
     });
 
     // Send welcome email after successful verification
-    await this.transporter.sendMail({
+    await this.mailerService.sendMail({
       from: process.env.MAIL_FROM,
       to: verifyEmailDto.email,
       subject: 'Welcome to Our Platform!',
@@ -457,5 +448,43 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
     });
 
     return { message: 'Şifreniz başarıyla güncellendi' };
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !user.isEmailVerified) {
+      // Kullanıcı yoksa veya e-posta doğrulanmamışsa, güvenlik nedeniyle işlem yapma
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = await bcrypt.hash(resetToken, 10);
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token 1 saat geçerli
+
+    await this.prismaService.user.update({
+      where: { email },
+      data: {
+        passwordResetToken: hashedToken,
+        passwordResetTokenExpiresAt: expiresAt,
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+    await this.mailerService.sendMail({
+      from: process.env.MAIL_FROM,
+      to: email,
+      subject: 'Parola Sıfırlama İsteği',
+      template: 'forgot-password',
+      context: {
+        name: user.name || 'Kullanıcı',
+        resetLink: resetUrl,
+        validityDuration: '1 saat',
+      },
+    });
   }
 }

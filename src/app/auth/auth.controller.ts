@@ -6,6 +6,8 @@ import {
   Get,
   Query,
   Res,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
@@ -16,6 +18,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Response } from 'express';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -129,5 +132,23 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid request.' })
   async resendVerificationEmail(@Body('email') email: string) {
     return this.authService.resendVerificationEmail(email);
+  }
+
+  @Post('forgot-password') // Yeni endpoint
+  @HttpCode(HttpStatus.OK) // Başarılı isteklerde 200 OK döndür
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent successfully (if user exists).',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid email format.' })
+  @ApiBody({ type: ForgotPasswordDto })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    // Kullanıcı mevcut olmasa bile güvenlik nedeniyle her zaman başarılı yanıt döndür
+    await this.authService.requestPasswordReset(forgotPasswordDto.email);
+    return {
+      message:
+        'Eğer e-posta adresiniz sistemimizde kayıtlıysa, parola sıfırlama bağlantısı gönderilmiştir.',
+    };
   }
 }

@@ -31,10 +31,12 @@ model User {
   Message         Message[]
   notifications   Notification[]
   assignedTasks   Task[]         @relation("AssignedTasks")
-  isEmailVerified Boolean       @default(false)
-  verificationToken String?    @db.VarChar(255)
-  tokenExpiresAt   DateTime?      @db.Timestamptz(6)
-  category        UserCategory    @default(NONE)
+  isEmailVerified Boolean        @default(false)
+  verificationToken String?      @db.VarChar(255)
+  tokenExpiresAt  DateTime?      @db.Timestamptz(6)
+  category        UserCategory   @default(NONE)
+  passwordResetToken String?     @db.VarChar(255)
+  passwordResetTokenExpiresAt DateTime? @db.Timestamptz(6)
 }
 
 model AidRequest {
