@@ -1,26 +1,40 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import Mail from 'nodemailer/lib/mailer'; // Mail tipini import et
+import Mail from 'nodemailer/lib/mailer';
 
 @Injectable()
 export class MailService implements OnModuleInit {
   private readonly logger = new Logger(MailService.name);
-  private transporter: Mail; // Mail tipini kullan
+  private transporter: Mail;
   private mailFrom: string;
+  private testAccount: any; // Ethereal test hesabı için
+  private useTestAccount = false;
 
-  constructor(private readonly configService: ConfigService) {
-    // Yapılandırmayı OnModuleInit içinde yapalım ki ConfigService kesin yüklensin
+  constructor(private readonly configService: ConfigService) {}
+
+  async onModuleInit() {
+    try {
+      // Önce normal SMTP sunucusu ile bağlantı kurmayı deneyelim
+      await this.setupRealTransporter();
+
+      // Eğer gerçek transporter başarısız olursa test hesabı oluşturalım
+      if (!this.transporter) {
+        await this.setupTestTransporter();
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize mail transporter:', error);
+      // Ana uygulama çalışmaya devam etsin, sadece e-posta gönderimi devre dışı kalacak
+    }
   }
 
-  // Modül başlatıldığında transporter'ı yapılandır
-  async onModuleInit() {
-    // Ortam değişkenlerinden MailerSend bilgilerini oku
+  // Gerçek SMTP sunucusuyla bağlantı kurma
+  private async setupRealTransporter() {
     const mailHost = this.configService.get<string>('MAIL_HOST');
     const mailPort = this.configService.get<number>('MAIL_PORT');
     const mailUser = this.configService.get<string>('MAIL_USER');
-    const mailPassword = this.configService.get<string>('MAIL_PASSWORD'); // MailerSend şifresi/token'ı
-    this.mailFrom = this.configService.get<string>('MAIL_FROM'); // Gönderen adresini al
+    const mailPassword = this.configService.get<string>('MAIL_PASSWORD');
+    this.mailFrom = this.configService.get<string>('MAIL_FROM');
 
     if (
       !mailHost ||
@@ -29,47 +43,69 @@ export class MailService implements OnModuleInit {
       !mailPassword ||
       !this.mailFrom
     ) {
-      this.logger.error(
-        'MailerSend SMTP configuration (MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASSWORD, MAIL_FROM) is missing or incomplete in environment variables.',
+      this.logger.warn(
+        'SMTP configuration incomplete. Some environment variables are missing.',
       );
-      // Uygulamanın başlamasını engelleyebilir veya hata fırlatabilirsiniz
-      // throw new Error('MailerSend SMTP configuration missing');
-      return; // Transporter oluşturulamaz.
+      return;
     }
 
     try {
+      // Bağlantı timeout'larını arttırarak daha fazla zaman tanıyalım
       this.transporter = nodemailer.createTransport({
         host: mailHost,
         port: mailPort,
-        // port 587 genellikle STARTTLS kullanır (secure: false)
-        // port 465 SSL kullanır (secure: true)
         secure: mailPort === 465,
         auth: {
           user: mailUser,
           pass: mailPassword,
         },
-        // Gerekirse timeout gibi ek ayarlar eklenebilir
-        // connectionTimeout: 10000, // 10 saniye
-        // greetingTimeout: 10000,
-        // socketTimeout: 10000,
+        connectionTimeout: 15000, // 15 saniye
+        greetingTimeout: 15000,
+        socketTimeout: 15000,
+        debug: true, // Daha fazla debug bilgisi
       });
 
-      this.logger.log(
-        `Nodemailer transporter configured for MailerSend user ${mailUser} on ${mailHost}:${mailPort}`,
-      );
-
-      // Bağlantıyı doğrula (Opsiyonel ama önerilir)
+      // Bağlantıyı test ediyoruz
       await this.transporter.verify();
       this.logger.log(
-        `Nodemailer transporter verified successfully for ${mailUser}`,
+        `SMTP connection established successfully with ${mailHost}:${mailPort}`,
       );
     } catch (error) {
       this.logger.error(
-        `Failed to configure or verify Nodemailer transporter for ${mailUser}:`,
+        `Failed to connect to SMTP server (${mailHost}:${mailPort}):`,
         error,
       );
-      // Transporter null kalacak veya hata fırlatılacak
-      this.transporter = null; // Hata durumunda transporter'ı null yapalım
+      this.transporter = null;
+    }
+  }
+
+  // Test hesabı oluşturma ve yapılandırma (Ethereal)
+  private async setupTestTransporter() {
+    try {
+      this.logger.warn('Using Ethereal test account for email sending');
+
+      // Ethereal.email test hesabı oluştur
+      this.testAccount = await nodemailer.createTestAccount();
+
+      // Test hesabı bilgileriyle transporter oluştur
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: this.testAccount.user,
+          pass: this.testAccount.pass,
+        },
+      });
+
+      this.useTestAccount = true;
+      this.mailFrom = this.testAccount.user;
+      this.logger.log(
+        `Ethereal test account created: ${this.testAccount.user}`,
+      );
+    } catch (error) {
+      this.logger.error('Failed to create Ethereal test account:', error);
+      this.transporter = null;
     }
   }
 
@@ -77,7 +113,7 @@ export class MailService implements OnModuleInit {
     to: string | string[],
     subject: string,
     html: string,
-    from?: string, // İsteğe bağlı olarak göndericiyi override etme imkanı
+    from?: string,
   ): Promise<boolean> {
     if (!this.transporter) {
       this.logger.error(
@@ -86,28 +122,31 @@ export class MailService implements OnModuleInit {
       return false;
     }
 
-    const sender = from || this.mailFrom; // Özel gönderici yoksa varsayılanı kullan
+    const sender = from || this.mailFrom;
 
     const mailOptions: nodemailer.SendMailOptions = {
-      from: `"TURDES" <${sender}>`, // Gönderen adı ve e-posta
-      to: to, // Alıcı veya alıcılar
+      from: `"TURDES" <${sender}>`,
+      to: to,
       subject: subject,
       html: html,
     };
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(
-        `Email sent successfully via MailerSend. To: ${to}, Message ID: ${info.messageId}`,
-      );
+
+      if (this.useTestAccount) {
+        // Test hesabı kullanıldığında, e-postayı görüntülemek için URL göster
+        const previewUrl = nodemailer.getTestMessageUrl(info);
+        this.logger.log(`Test email sent. Preview URL: ${previewUrl}`);
+      } else {
+        this.logger.log(
+          `Email sent successfully. To: ${to}, Message ID: ${info.messageId}`,
+        );
+      }
+
       return true;
     } catch (error) {
-      this.logger.error(
-        `Failed to send email via MailerSend. To: ${to}, Subject: ${subject}`,
-        error,
-      );
-      // Hata detaylarını loglamak önemlidir (örn: kimlik doğrulama hatası vs.)
-      // console.error(error); // Daha fazla detay için
+      this.logger.error(`Failed to send email to ${to}:`, error);
       return false;
     }
   }
