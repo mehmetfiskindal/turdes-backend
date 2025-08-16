@@ -10,21 +10,23 @@ import * as bcrypt from 'bcrypt';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Throttle } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   private transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
-    port: parseInt(process.env.MAIL_PORT || '587'),
-    secure: false, // true for 465, false for other ports
+    host: this.configService.get<string>('MAIL_HOST'),
+    port: parseInt(this.configService.get<string>('MAIL_PORT') || '587'),
+    secure: false,
     auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASSWORD,
+      user: this.configService.get<string>('MAIL_USER'),
+      pass: this.configService.get<string>('MAIL_PASSWORD'),
     },
   });
 
@@ -93,21 +95,15 @@ export class AuthService {
       );
       return;
     }
-
     // Normal ortamda e-posta gönderimi
-    const verificationUrl = `${process.env.HOST_URL}auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
+    const hostUrl = this.configService.get<string>('HOST_URL') || '';
+    const verificationUrl = `${hostUrl}auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
     await this.transporter.sendMail({
-      from: process.env.MAIL_FROM,
+      from: this.configService.get<string>('MAIL_FROM'),
       to: user.email,
       subject: 'Verify your email',
-      text: `Please verify your email by clicking on the following link: ${verificationUrl}
-
-This link contains both your verification token and email address to complete the verification process automatically.
-
-If you need to enter these details manually:
-- Your verification token: ${token}
-- Your email: ${user.email}`,
+      text: `Please verify your email by clicking on the following link: ${verificationUrl}\n\nThis link contains both your verification token and email address to complete the verification process automatically.\n\nIf you need to enter these details manually:\n- Your verification token: ${token}\n- Your email: ${user.email}`,
       html: `
         <h2>Email Verification</h2>
         <p>Please verify your email by clicking on the following link:</p>
@@ -125,78 +121,18 @@ If you need to enter these details manually:
   }
 
   // Şifre sıfırlama e-postası gönderen metot
-  async sendPasswordResetEmail(
-    userOrEmail: User | string,
-    token: string,
-  ): Promise<void> {
-    let user: User;
-
-    // Eğer string tipinde bir email parametresi geçirildiyse, kullanıcıyı veritabanından al
-    if (typeof userOrEmail === 'string') {
-      user = await this.prismaService.user.findUnique({
-        where: { email: userOrEmail },
-      });
-
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-    } else {
-      // Doğrudan User nesnesi verilmiş
-      user = userOrEmail;
-    }
-
-    // Test ortamında e-posta gönderimi yapma
-    if (process.env.NODE_ENV === 'test') {
-      console.log(
-        `TEST MODE: Password reset email would be sent to ${user.email} with token ${token}`,
-      );
-      return;
-    }
-
-    // Normal ortamda e-posta gönderimi
-    const resetUrl = `${process.env.HOST_URL}auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
-
-    await this.transporter.sendMail({
-      from: process.env.MAIL_FROM,
-      to: user.email,
-      subject: 'Şifre Sıfırlama İsteği',
-      text: `Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın: ${resetUrl}
-
-Bu bağlantı şifre sıfırlama işlemi için hem token hem de e-posta adresinizi içerir.
-
-Bu bilgileri manuel olarak girmeniz gerekirse:
-- Şifre sıfırlama tokeniniz: ${token}
-- E-posta adresiniz: ${user.email}
-
-Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
-      html: `
-        <h2>Şifre Sıfırlama</h2>
-        <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:</p>
-        <p><a href="${resetUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Şifremi Sıfırla</a></p>
-        <p>Veya bu URL'yi tarayıcınıza kopyalayıp yapıştırın:</p>
-        <p>${resetUrl}</p>
-        <p>Bu bağlantı şifre sıfırlama işlemi için hem token hem de e-posta adresinizi içerir.</p>
-        <p>Bu bilgileri manuel olarak girmeniz gerekirse:</p>
-        <ul>
-          <li><strong>Şifre sıfırlama tokeniniz:</strong> ${token}</li>
-          <li><strong>E-posta adresiniz:</strong> ${user.email}</li>
-        </ul>
-        <p>Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.</p>
-      `,
-    });
-  }
+  // (Kaldırıldı) sendPasswordResetEmail fonksiyonu kullanılmadığı için temizlendi.
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
     const user = await this.prismaService.user.findUnique({
       where: { email: verifyEmailDto.email },
     });
-
     if (
       !user ||
       user.verificationToken !== verifyEmailDto.token ||
       new Date() > user.tokenExpiresAt
     ) {
-      if (new Date() > user.tokenExpiresAt) {
+      if (user && new Date() > user.tokenExpiresAt) {
         throw new HttpException(
           'Verification token expired. Please request a new verification email.',
           HttpStatus.BAD_REQUEST,
@@ -213,12 +149,12 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
       data: {
         isEmailVerified: true,
         verificationToken: null,
+        tokenExpiresAt: null,
       },
     });
 
-    // Send welcome email after successful verification
     await this.transporter.sendMail({
-      from: process.env.MAIL_FROM,
+      from: this.configService.get<string>('MAIL_FROM'),
       to: verifyEmailDto.email,
       subject: 'Welcome to Our Platform!',
       text: 'Your email has been successfully verified. Welcome to our platform!',
@@ -292,25 +228,34 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
       );
     }
 
-    const tokens = this.generateToken(user);
-    await this.prismaService.user.update({
-      where: { id: user.id },
-      data: { refreshToken: tokens.refresh_token },
-    });
-    return tokens;
+    return this.generateTokenPair(user);
   }
 
   // Token generation
-  generateToken(user: User) {
-    const payload = { username: user.email, sub: user.id, role: user.role };
-    return {
-      access_token: this.jwtService.sign(payload),
-      refresh_token: this.jwtService.sign(payload, {
-        expiresIn: '7d', // 7 gün
-      }),
-      role: user.role,
-      userId: user.id,
-    };
+  private buildJwtPayload(user: User) {
+    return { username: user.email, sub: user.id, role: user.role };
+  }
+
+  private async generateTokenPair(user: User) {
+    const payload = this.buildJwtPayload(user);
+    const access_token = this.jwtService.sign(payload, {
+      secret:
+        this.configService.get<string>('JWT_ACCESS_SECRET') ||
+        this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES') || '1h',
+    });
+    const refresh_token = this.jwtService.sign(payload, {
+      secret:
+        this.configService.get<string>('JWT_REFRESH_SECRET') ||
+        this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES') || '7d',
+    });
+    const hashed = await bcrypt.hash(refresh_token, 10);
+    await this.prismaService.user.update({
+      where: { id: user.id },
+      data: { refreshToken: hashed },
+    });
+    return { access_token, refresh_token, role: user.role, userId: user.id };
   }
 
   // User validation method
@@ -366,31 +311,39 @@ Bu e-posta size yanlışlıkla geldiyse, lütfen dikkate almayın.`,
         );
       }
 
-      const decoded = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_SECRET,
-      });
+      let decoded: any;
+      try {
+        decoded = this.jwtService.verify(refreshToken, {
+          secret:
+            this.configService.get<string>('JWT_REFRESH_SECRET') ||
+            this.configService.get<string>('JWT_SECRET'),
+        });
+      } catch (err) {
+        throw new HttpException(
+          'Yenileme tokeniniz süresi dolmuş veya geçersiz. Lütfen tekrar giriş yapın.',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
 
       const user = await this.prismaService.user.findUnique({
-        where: {
-          id: decoded.sub,
-          refreshToken: refreshToken,
-        },
+        where: { id: decoded.sub },
       });
-
-      if (!user) {
+      if (!user || !user.refreshToken) {
         throw new HttpException(
           'Geçersiz yenileme tokeni. Lütfen tekrar giriş yapın.',
           HttpStatus.UNAUTHORIZED,
         );
       }
 
-      const payload = { username: user.email, sub: user.id, role: user.role };
-      return {
-        access_token: this.jwtService.sign(payload),
-        refresh_token: this.jwtService.sign(payload, {
-          expiresIn: '7d',
-        }),
-      };
+      const match = await bcrypt.compare(refreshToken, user.refreshToken);
+      if (!match) {
+        throw new HttpException(
+          'Geçersiz yenileme tokeni. Lütfen tekrar giriş yapın.',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      return this.generateTokenPair(user);
     } catch (e) {
       if (e instanceof HttpException) {
         throw e;

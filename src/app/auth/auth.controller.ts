@@ -16,11 +16,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 @ApiTags('Authentication')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -90,7 +94,7 @@ export class AuthController {
       return res.render('auth/verify-email-success', {
         message:
           'E-posta adresiniz başarıyla doğrulandı! Artık hesabınıza giriş yapabilirsiniz.',
-        loginUrl: process.env.FRONTEND_URL || '/',
+        loginUrl: this.configService.get<string>('FRONTEND_URL') || '/',
       });
     } catch (error) {
       // Hata tipine göre özel mesajlar ve davranışlar
@@ -111,11 +115,12 @@ export class AuthController {
       }
 
       // MVC yaklaşımı: Hata durumunda ilgili template'e veri gönderiyoruz
+      const frontend = this.configService.get<string>('FRONTEND_URL') || '';
       return res.render('auth/verify-email-error', {
         message: errorMessage,
         showResend: showResend,
-        resendUrl: `${process.env.FRONTEND_URL}/resend-verification?email=${encodeURIComponent(email)}`,
-        homeUrl: process.env.FRONTEND_URL || '/',
+        resendUrl: `${frontend}/resend-verification?email=${encodeURIComponent(email)}`,
+        homeUrl: frontend || '/',
       });
     }
   }
