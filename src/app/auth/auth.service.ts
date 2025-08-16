@@ -127,6 +127,11 @@ export class AuthService {
     const user = await this.prismaService.user.findUnique({
       where: { email: verifyEmailDto.email },
     });
+    // Eğer zaten doğrulanmışsa idempotent davran
+    if (user && user.isEmailVerified) {
+      return { message: 'Email already verified' };
+    }
+
     if (
       !user ||
       user.verificationToken !== verifyEmailDto.token ||
@@ -153,12 +158,17 @@ export class AuthService {
       },
     });
 
-    await this.transporter.sendMail({
-      from: this.configService.get<string>('MAIL_FROM'),
-      to: verifyEmailDto.email,
-      subject: 'Welcome to Our Platform!',
-      text: 'Your email has been successfully verified. Welcome to our platform!',
-    });
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('MAIL_FROM'),
+        to: verifyEmailDto.email,
+        subject: 'Welcome to Our Platform!',
+        text: 'Your email has been successfully verified. Welcome to our platform!',
+      });
+    } catch (e) {
+      // Email gönderimi başarısız olsa bile doğrulama kalıcıdır; logla ve devam et
+      console.warn('Welcome email send failed:', e.message);
+    }
 
     return { message: 'Email verified successfully' };
   }

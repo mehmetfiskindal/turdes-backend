@@ -8,6 +8,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Throttle } from '@nestjs/throttler';
 import { UserDto } from './dto/user.dto';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -51,6 +52,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @ApiOperation({ summary: 'Log in a user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
