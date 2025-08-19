@@ -7,7 +7,7 @@ import { UnauthorizedException } from '@nestjs/common';
 describe('AidRequestsService', () => {
   let service: AidRequestsService;
   let prismaService: PrismaService;
-  let firebaseAdminService: FirebaseAdminService;
+  // firebaseAdminService currently not directly asserted in tests
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -47,8 +47,7 @@ describe('AidRequestsService', () => {
 
     service = module.get<AidRequestsService>(AidRequestsService);
     prismaService = module.get<PrismaService>(PrismaService);
-    firebaseAdminService =
-      module.get<FirebaseAdminService>(FirebaseAdminService);
+    module.get<FirebaseAdminService>(FirebaseAdminService);
 
     jest.spyOn(prismaService.organization, 'findUnique').mockResolvedValue({
       id: 1,
@@ -57,6 +56,8 @@ describe('AidRequestsService', () => {
       mission: 'Helping people',
       contactInfoId: 1,
       addressId: 1,
+      rating: 0,
+      feedback: '',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -68,6 +69,25 @@ describe('AidRequestsService', () => {
 
   describe('addComment', () => {
     it('should add a comment to a specific aid request', async () => {
+      // Aid request existence mock
+      jest.spyOn(prismaService.aidRequest, 'findUnique').mockResolvedValue({
+        id: 1,
+        type: 'Food',
+        description: 'Need food',
+        userId: 1,
+        organizationId: 1,
+        status: 'Pending',
+        isDeleted: false,
+        locationId: 1,
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
       const result = {
         id: 1,
         content: 'This is a comment',
@@ -83,6 +103,25 @@ describe('AidRequestsService', () => {
 
   describe('uploadDocument', () => {
     it('should upload a document to a specific aid request', async () => {
+      // Aid request existence mock
+      jest.spyOn(prismaService.aidRequest, 'findUnique').mockResolvedValue({
+        id: 1,
+        type: 'Food',
+        description: 'Need food',
+        userId: 1,
+        organizationId: 1,
+        status: 'Pending',
+        isDeleted: false,
+        locationId: 1,
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
       const result = {
         id: 1,
         name: 'Document',
@@ -111,6 +150,12 @@ describe('AidRequestsService', () => {
           status: 'Pending',
           isDeleted: false,
           locationId: 1,
+          qrCodeUrl: '',
+          isUrgent: false,
+          recurring: false,
+          verified: false,
+          reported: false,
+          helpCode: '',
         },
       ];
       jest
@@ -134,6 +179,12 @@ describe('AidRequestsService', () => {
         locationId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
       };
       jest
         .spyOn(prismaService.aidRequest, 'findUnique')
@@ -154,6 +205,12 @@ describe('AidRequestsService', () => {
         locationId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
       };
       jest
         .spyOn(prismaService.aidRequest, 'findUnique')
@@ -177,18 +234,46 @@ describe('AidRequestsService', () => {
         isDeleted: false,
         latitude: 40.7128,
         longitude: -74.006,
+        recurring: false,
       };
       const location = { id: 1, latitude: 40.7128, longitude: -74.006 };
-      const result = {
+      const createdAidRequest = {
         id: 1,
-        ...createAidRequestDto,
+        type: createAidRequestDto.type,
+        description: createAidRequestDto.description,
+        status: createAidRequestDto.status,
+        userId: 1,
+        organizationId: 1,
+        isDeleted: false,
+        locationId: location.id,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
+      } as any;
       jest.spyOn(prismaService.location, 'create').mockResolvedValue(location);
-      jest.spyOn(prismaService.aidRequest, 'create').mockResolvedValue(result);
+      jest
+        .spyOn(prismaService.aidRequest, 'create')
+        .mockResolvedValue(createdAidRequest);
+      // Mock update call invoked after QR generation
+      jest
+        .spyOn(prismaService.aidRequest, 'update')
+        .mockResolvedValue({ ...createdAidRequest, qrCodeUrl: 'mock-qr' });
+      // Mock QRCode library if needed (service uses QRCode.toDataURL). Instead of importing, we just allow any value.
 
-      expect(await service.create(createAidRequestDto, 1)).toBe(result);
+      const created = await service.create(createAidRequestDto, 1);
+      expect(created).toMatchObject({
+        id: 1,
+        type: 'Food',
+        description: 'Need food',
+        status: 'Pending',
+      });
+      expect(created.qrCodeUrl).toBeDefined();
+      expect(created.qrCodeUrl).toContain('data:image/png;base64');
     });
 
     it('should throw an error if the organization is not found', async () => {
@@ -202,6 +287,7 @@ describe('AidRequestsService', () => {
         isDeleted: false,
         latitude: 40.7128,
         longitude: -74.006,
+        recurring: false,
       };
       jest
         .spyOn(prismaService.organization, 'findUnique')
@@ -226,7 +312,17 @@ describe('AidRequestsService', () => {
         locationId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
       };
+      jest.spyOn(prismaService.aidRequest, 'findUnique').mockResolvedValue({
+        ...result,
+        status: 'Pending', // existing status different from new status
+      } as any);
       jest.spyOn(prismaService.aidRequest, 'update').mockResolvedValue(result);
 
       expect(await service.updateStatus(1, 'Completed', '1', 'admin')).toBe(
@@ -254,7 +350,17 @@ describe('AidRequestsService', () => {
         locationId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
+        qrCodeUrl: '',
+        isUrgent: false,
+        recurring: false,
+        verified: false,
+        reported: false,
+        helpCode: '',
       };
+      jest.spyOn(prismaService.aidRequest, 'findUnique').mockResolvedValue({
+        ...result,
+        isDeleted: false, // existing record not deleted yet
+      } as any);
       jest.spyOn(prismaService.aidRequest, 'update').mockResolvedValue(result);
 
       expect(await service.delete(1)).toBe(result);

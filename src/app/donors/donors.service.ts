@@ -6,11 +6,40 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
+import { CreateDonorDto } from './dto/create-donor.dto';
 import { Role } from '../casl/action';
 
 @Injectable()
 export class DonorsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // === Donor (entity) operations added for backward compatibility with existing tests ===
+  async create(createDonorDto: CreateDonorDto) {
+    const { name, email, phone } = createDonorDto;
+    // donationHistory test alanı DTO'da olabilir ama DB create sırasında kullanılmaz
+    return this.prisma.donor.create({
+      data: { name, email, phone },
+    });
+  }
+
+  async findOne(id: number) {
+    return this.prisma.donor.findUnique({ where: { id } });
+  }
+
+  async findDonations(donorId: number) {
+    return this.prisma.donation.findMany({ where: { donorId } });
+  }
+
+  async findDonationHistory(donorId: number) {
+    return this.prisma.donation.findMany({
+      where: { donorId },
+      include: {
+        donor: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+  }
 
   async createDonation(createDonationDto: CreateDonationDto) {
     const { amount, donorId, userId, anonymous = false } = createDonationDto;

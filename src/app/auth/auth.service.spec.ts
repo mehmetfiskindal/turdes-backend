@@ -31,6 +31,26 @@ describe('AuthService', () => {
             verify: jest.fn(),
           },
         },
+        {
+          provide: require('@nestjs/config').ConfigService,
+          useValue: {
+            get: (key: string) => {
+              const map: Record<string, string> = {
+                JWT_ACCESS_SECRET: 'access_secret',
+                JWT_REFRESH_SECRET: 'refresh_secret',
+                JWT_ACCESS_EXPIRES: '1h',
+                JWT_REFRESH_EXPIRES: '7d',
+                MAIL_HOST: 'smtp.test',
+                MAIL_PORT: '587',
+                MAIL_USER: 'user',
+                MAIL_PASSWORD: 'pass',
+                MAIL_FROM: 'test@test.com',
+                HOST_URL: 'http://localhost/',
+              };
+              return map[key];
+            },
+          },
+        },
       ],
     }).compile();
 
@@ -51,6 +71,10 @@ describe('AuthService', () => {
         passwordHash: 'hashed_password',
         createdAt: new Date(),
         updatedAt: new Date(),
+        isEmailVerified: true,
+        verificationToken: null,
+        tokenExpiresAt: null,
+        category: 'NONE' as any,
       });
       await expect(
         authService.register({
@@ -63,8 +87,27 @@ describe('AuthService', () => {
       ).rejects.toThrow(HttpException);
     });
 
-    it('should create a new user and return tokens', async () => {
-      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValueOnce(null);
+    it('should create a new user and return message', async () => {
+      // first findUnique -> existing user check
+      jest
+        .spyOn(prismaService.user, 'findUnique')
+        .mockResolvedValueOnce(null as any)
+        // second findUnique inside sendVerificationEmail (by email) returns created user
+        .mockResolvedValueOnce({
+          id: 1,
+          email: 'test@test.com',
+          role: 'user',
+          refreshToken: null,
+          name: 'Test User',
+          phone: '1234567890',
+          passwordHash: 'hashed_password',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isEmailVerified: false,
+          verificationToken: 'token',
+          tokenExpiresAt: new Date(Date.now() + 1000 * 60 * 30),
+          category: 'NONE' as any,
+        } as any);
       jest.spyOn(prismaService.user, 'create').mockResolvedValueOnce({
         id: 1,
         email: 'test@test.com',
@@ -75,19 +118,21 @@ describe('AuthService', () => {
         passwordHash: 'hashed_password',
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
-      const tokens = await authService.register({
+        isEmailVerified: false,
+        verificationToken: 'token',
+        tokenExpiresAt: new Date(Date.now() + 1000 * 60 * 30),
+        category: 'NONE' as any,
+      } as any);
+      process.env.NODE_ENV = 'test';
+      const response = await authService.register({
         email: 'test@test.com',
         password: 'password',
         name: 'Test',
         phone: '1234567890',
         role: 'user',
       });
-      expect(tokens).toEqual({
-        access_token: 'test_token',
-        refresh_token: 'test_token',
-        role: 'user',
-        userId: 1,
+      expect(response).toEqual({
+        message: 'User registered successfully. Please verify your email.',
       });
     });
   });
@@ -111,6 +156,10 @@ describe('AuthService', () => {
         phone: '1234567890',
         createdAt: new Date(),
         updatedAt: new Date(),
+        isEmailVerified: true,
+        verificationToken: null,
+        tokenExpiresAt: null,
+        category: 'NONE' as any,
       };
       jest
         .spyOn(prismaService.user, 'findUnique')
@@ -143,21 +192,29 @@ describe('AuthService', () => {
         id: 1,
         email: 'test@test.com',
         role: 'user',
-        refreshToken: null,
+        refreshToken: await bcrypt.hash('valid_token', 10),
         name: 'Test User',
         phone: '1234567890',
         passwordHash: 'hashed_password',
         createdAt: new Date(),
         updatedAt: new Date(),
+        isEmailVerified: true,
+        verificationToken: null,
+        tokenExpiresAt: null,
+        category: 'NONE' as any,
       };
       jest.spyOn(jwtService, 'verify').mockReturnValue({ sub: mockUser.id });
       jest
         .spyOn(prismaService.user, 'findUnique')
-        .mockResolvedValueOnce(mockUser);
+        .mockResolvedValueOnce(mockUser as any);
+      // bcrypt.compare to succeed
+  jest.spyOn(bcrypt as any, 'compare').mockResolvedValue(true as any);
       const tokens = await authService.refreshToken('valid_token');
       expect(tokens).toEqual({
         access_token: 'test_token',
         refresh_token: 'test_token',
+        role: 'user',
+        userId: 1,
       });
     });
   });

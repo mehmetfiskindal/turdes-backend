@@ -67,6 +67,8 @@ describe('HistoryService', () => {
         updatedAt: new Date(),
         contactInfoId: 1,
         addressId: 1,
+  rating: 0,
+  feedback: '',
         aidRequest: [{ id: 1, type: 'Food', description: 'Need food' }],
       };
       jest

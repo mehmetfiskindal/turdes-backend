@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import * as nodemailer from 'nodemailer';
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserDto } from './dto/user.dto';
@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
@@ -90,7 +91,7 @@ export class AuthService {
 
     // Test ortamında e-posta gönderimi yapma
     if (process.env.NODE_ENV === 'test') {
-      console.log(
+      this.logger.debug(
         `TEST MODE: Email would be sent to ${user.email} with token ${token}`,
       );
       return;
@@ -167,7 +168,7 @@ export class AuthService {
       });
     } catch (e) {
       // Email gönderimi başarısız olsa bile doğrulama kalıcıdır; logla ve devam et
-      console.warn('Welcome email send failed:', e.message);
+      this.logger.warn(`Welcome email send failed: ${e.message}`);
     }
 
     return { message: 'Email verified successfully' };
@@ -243,7 +244,8 @@ export class AuthService {
 
   // Token generation
   private buildJwtPayload(user: User) {
-    return { username: user.email, sub: user.id, role: user.role };
+    // New normalized payload uses 'email' instead of legacy 'username'
+    return { email: user.email, sub: user.id, role: user.role };
   }
 
   private async generateTokenPair(user: User) {
@@ -275,20 +277,20 @@ export class AuthService {
     });
 
     if (!user) {
-      console.log('User not found'); // Add logging
+      this.logger.debug('User not found');
       return null;
     }
 
-    console.log('Retrieved user:', user); // Add logging
+    this.logger.verbose(`Retrieved user id=${user.id}`);
 
     if (typeof password !== 'string' || typeof user.passwordHash !== 'string') {
-      console.log('Invalid password or passwordHash type'); // Add logging
+      this.logger.debug('Invalid password or passwordHash type');
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      console.log('Invalid password'); // Add logging
+      this.logger.debug('Invalid password');
       return null;
     }
 
@@ -303,7 +305,7 @@ export class AuthService {
     });
 
     if (!user) {
-      console.log('User not found by ID'); // Add logging
+      this.logger.debug('User not found by ID');
       return null;
     }
 

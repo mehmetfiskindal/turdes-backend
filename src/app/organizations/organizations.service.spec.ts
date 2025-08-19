@@ -87,6 +87,8 @@ describe('OrganizationService', () => {
         updatedAt: new Date(),
         contactInfoId: 1,
         addressId: 1,
+        rating: 0,
+        feedback: '',
       };
 
       jest
@@ -113,6 +115,8 @@ describe('OrganizationService', () => {
           updatedAt: new Date(),
           contactInfoId: 1,
           addressId: 1,
+          rating: 0,
+          feedback: '',
         },
       ];
       jest
@@ -134,6 +138,8 @@ describe('OrganizationService', () => {
         updatedAt: new Date(),
         contactInfoId: 1,
         addressId: 1,
+        rating: 0,
+        feedback: '',
       };
       jest
         .spyOn(prismaService.organization, 'findUnique')
@@ -172,6 +178,8 @@ describe('OrganizationService', () => {
         updatedAt: new Date(),
         contactInfoId: 1,
         addressId: 1,
+        rating: 0,
+        feedback: '',
       };
       const contactInfo = {
         id: 1,
@@ -214,10 +222,15 @@ describe('OrganizationService', () => {
         updatedAt: new Date(),
         contactInfoId: 1,
         addressId: 1,
+        rating: 0,
+        feedback: '',
       };
       jest
+        .spyOn(prismaService.organization, 'findUnique')
+        .mockResolvedValue(organization as any);
+      jest
         .spyOn(prismaService.organization, 'delete')
-        .mockResolvedValue(organization);
+        .mockResolvedValue(organization as any);
 
       expect(await service.remove(1)).toBe(organization);
     });
@@ -229,7 +242,7 @@ describe('OrganizationService', () => {
         content: 'Hello, this is a test message',
         senderId: 1,
         receiverId: 2,
-        organizationId: 1, // Added organizationId to match the updated method signature
+        organizationId: 1,
       };
       const message = {
         id: 1,
@@ -237,11 +250,36 @@ describe('OrganizationService', () => {
         senderId: 1,
         receiverId: 2,
         organizationId: 1,
+        userId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+      const organization = {
+        id: 1,
+        name: 'Test Organization',
+        type: 'Non-Profit',
+        mission: 'Helping people',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        contactInfoId: 1,
+        addressId: 1,
+        rating: 0,
+        feedback: '',
+      };
 
-      jest.spyOn(prismaService.message, 'create').mockResolvedValue(message);
+      jest
+        .spyOn(prismaService.organization, 'findUnique')
+        .mockResolvedValue(organization as any);
+
+      // Mock user lookups for sender and receiver
+      (prismaService as any).user = {
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 1 })
+          .mockResolvedValueOnce({ id: 2 }),
+      };
+
+      jest.spyOn(prismaService.message, 'create').mockResolvedValue(message as any);
 
       expect(await service.sendMessage(createMessageDto)).toBe(message);
     });

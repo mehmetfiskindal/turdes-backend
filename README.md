@@ -219,3 +219,24 @@ Projeye katkıda bulunmak için:
 
 Bu proje MIT lisansı altında sunulmaktadır.
 
+## Audit Log
+Uygulama yazma (POST/PUT/PATCH/DELETE) isteklerinde otomatik olarak `AuditLog` tablosuna kayıt açar.
+
+Kaydedilen alanlar:
+- userId (oturum varsa)
+- action: create/update/delete (+ _failed son ekli hata durumunda)
+- entity: URL ilk segmenti (ör: aid-requests)
+- entityId: route param `id` varsa
+- metadata: Gövdeden hassas alanlar çıkarılmış (password, token vb.) JSON
+- ip, userAgent, createdAt
+
+Özelleştirme:
+- `AUDIT_LOG_ENABLED=false` env ile tamamen kapatılabilir.
+
+Performans:
+- Kayıt hataları uygulamayı etkilemez (hatalar yutulur), asenkron create işlemi beklenmez.
+
+Gelecek İyileştirmeler:
+- Belirli entity alanlarını maskeleme whitelist desteği
+- Esnek action adlandırma decorator tabanlı
+

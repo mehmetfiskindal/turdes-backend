@@ -17,9 +17,15 @@ describe('VolunteersService', () => {
           useValue: {
             volunteer: {
               create: jest.fn(),
+              findFirst: jest.fn(),
+              findUnique: jest.fn(),
             },
             taskAssignment: {
               create: jest.fn(),
+              findFirst: jest.fn(),
+            },
+            task: {
+              findUnique: jest.fn(),
             },
           },
         },
@@ -52,6 +58,7 @@ describe('VolunteersService', () => {
         updatedAt: new Date(),
       };
       jest.spyOn(prismaService.volunteer, 'create').mockResolvedValue(result);
+      jest.spyOn(prismaService.volunteer, 'findFirst').mockResolvedValue(null);
 
       expect(await service.register(createVolunteerDto)).toBe(result);
     });
@@ -72,6 +79,27 @@ describe('VolunteersService', () => {
       jest
         .spyOn(prismaService.taskAssignment, 'create')
         .mockResolvedValue(result);
+      jest.spyOn(prismaService.volunteer, 'findUnique').mockResolvedValue({
+        id: 1,
+        name: 'Volunteer 1',
+        email: 'v1@test.com',
+        phone: '123',
+        tasks: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+      jest.spyOn(prismaService.task, 'findUnique').mockResolvedValue({
+        id: 1,
+        name: 'Task 1',
+        description: 'Desc',
+        latitude: 0,
+        longitude: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+      jest
+        .spyOn(prismaService.taskAssignment, 'findFirst')
+        .mockResolvedValue(null);
 
       expect(await service.assignTask(assignTaskDto)).toBe(result);
     });
