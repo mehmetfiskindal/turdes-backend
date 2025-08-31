@@ -12,16 +12,11 @@ import * as Joi from 'joi';
 import { CaslModule } from './casl/casl.module';
 import { PrismaService } from './prisma/prisma.service';
 import { VolunteersModule } from './volunteers/volunteers.module';
-import { SecurityModule } from './security/security.module';
-import { ReportsModule } from './reports/reports.module';
-
-import { HistoryModule } from './history/history.module';
 import { FaqModule } from './faq/faq.module';
 import { EducationModule } from './education/education.module';
 import { DonorsModule } from './donors/donors.module';
-import { CampaignsModule } from './campaigns/campaigns.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { MapModule } from './map/map.module';
+
 import { AuditModule } from './audit/audit.module';
 import { AuditLogInterceptor } from './audit/audit-log.interceptor';
 
@@ -59,14 +54,9 @@ import { AuditLogInterceptor } from './audit/audit-log.interceptor';
     CaslModule,
     DashboardModule,
     VolunteersModule,
-    SecurityModule,
-    ReportsModule,
-    HistoryModule,
     FaqModule,
     EducationModule,
     DonorsModule,
-    CampaignsModule,
-    MapModule,
     AuditModule,
   ],
   controllers: [AppController],
