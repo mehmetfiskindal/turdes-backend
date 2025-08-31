@@ -1,20 +1,34 @@
 // firebase-admin.service.ts
 
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { GoogleAuth } from 'google-auth-library';
 
 @Injectable()
 export class FirebaseAdminService {
-  private readonly messagingUrl =
-    'https://fcm.googleapis.com/v1/projects/turdes-f2e8d/messages:send';
+  constructor(private configService: ConfigService) {}
+
+  private get messagingUrl(): string {
+    const projectId = this.configService.get<string>(
+      'FIREBASE_PROJECT_ID',
+      'turdes-f2e8d',
+    );
+    return `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+  }
 
   // Google Cloud Authentication için JWT oluşturuyoruz
   private async getAccessToken(): Promise<string> {
     const client = new GoogleAuth({
       credentials: {
-        client_email: process.env.client_email,
-        private_key: process.env.private_key,
+        client_email: this.configService.get<string>(
+          'FIREBASE_CLIENT_EMAIL',
+          process.env.client_email,
+        ),
+        private_key: this.configService.get<string>(
+          'FIREBASE_PRIVATE_KEY',
+          process.env.private_key,
+        ),
       },
       scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
     });

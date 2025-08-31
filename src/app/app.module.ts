@@ -43,6 +43,10 @@ import { ResponseInterceptor, AllExceptionsFilter } from '../common';
         MAIL_PASSWORD: Joi.string().required(),
         MAIL_FROM: Joi.string().required(),
         AUDIT_LOG_ENABLED: Joi.string().valid('true', 'false').optional(),
+        // Firebase configuration
+        FIREBASE_PROJECT_ID: Joi.string().optional(),
+        FIREBASE_CLIENT_EMAIL: Joi.string().optional(),
+        FIREBASE_PRIVATE_KEY: Joi.string().optional(),
       }),
     }),
     ThrottlerModule.forRoot([
