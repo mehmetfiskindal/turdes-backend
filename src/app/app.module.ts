@@ -14,8 +14,6 @@ import { PrismaService } from './prisma/prisma.service';
 import { VolunteersModule } from './volunteers/volunteers.module';
 import { EducationModule } from './education/education.module';
 import { DonorsModule } from './donors/donors.module';
-import { DashboardModule } from './dashboard/dashboard.module';
-
 import { AuditModule } from './audit/audit.module';
 import { AuditLogInterceptor } from './audit/audit-log.interceptor';
 
@@ -60,7 +58,6 @@ import { ResponseInterceptor, AllExceptionsFilter } from '../common';
     AidRequestsModule,
     OrganizationsModule,
     CaslModule,
-    DashboardModule,
     VolunteersModule,
     EducationModule,
     DonorsModule,
