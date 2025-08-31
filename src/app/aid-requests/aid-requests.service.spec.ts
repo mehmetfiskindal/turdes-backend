@@ -1,8 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AidRequestsService } from './aid-requests.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
-import { UnauthorizedException } from '@nestjs/common';
+import * as QRCode from 'qrcode';
+
+// QRCode mock
+jest.mock('qrcode', () => ({
+  toDataURL: jest.fn(),
+}));
 
 describe('AidRequestsService', () => {
   let service: AidRequestsService;
@@ -19,8 +23,10 @@ describe('AidRequestsService', () => {
             aidRequest: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+              count: jest.fn(),
             },
             comment: {
               create: jest.fn(),
@@ -36,18 +42,11 @@ describe('AidRequestsService', () => {
             },
           },
         },
-        {
-          provide: FirebaseAdminService,
-          useValue: {
-            sendPushNotification: jest.fn(),
-          },
-        },
       ],
     }).compile();
 
     service = module.get<AidRequestsService>(AidRequestsService);
     prismaService = module.get<PrismaService>(PrismaService);
-    module.get<FirebaseAdminService>(FirebaseAdminService);
 
     jest.spyOn(prismaService.organization, 'findUnique').mockResolvedValue({
       id: 1,
@@ -162,7 +161,7 @@ describe('AidRequestsService', () => {
         .spyOn(prismaService.aidRequest, 'findMany')
         .mockResolvedValue(result);
 
-      expect(await service.findAll(1)).toBe(result);
+      expect(await service.findAllByUser(1)).toBe(result);
     });
   });
 
@@ -190,34 +189,16 @@ describe('AidRequestsService', () => {
         .spyOn(prismaService.aidRequest, 'findUnique')
         .mockResolvedValue(result);
 
-      expect(await service.findOne(1, 1, 1)).toBe(result);
+      expect(await service.findOne(1)).toBe(result);
     });
 
-    it('should throw an UnauthorizedException if the user does not have access', async () => {
-      const result = {
-        id: 1,
-        type: 'Food',
-        description: 'Need food',
-        userId: 2,
-        organizationId: 1,
-        isDeleted: false,
-        status: 'Pending',
-        locationId: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        qrCodeUrl: '',
-        isUrgent: false,
-        recurring: false,
-        verified: false,
-        reported: false,
-        helpCode: '',
-      };
+    it('should throw NotFoundException if aid request not found', async () => {
       jest
         .spyOn(prismaService.aidRequest, 'findUnique')
-        .mockResolvedValue(result);
+        .mockResolvedValue(null);
 
-      await expect(service.findOne(1, 1, 1)).rejects.toThrow(
-        UnauthorizedException,
+      await expect(service.findOne(999)).rejects.toThrow(
+        'yardım talebi bulunamadı',
       );
     });
   });
@@ -259,89 +240,60 @@ describe('AidRequestsService', () => {
       jest
         .spyOn(prismaService.aidRequest, 'create')
         .mockResolvedValue(createdAidRequest);
+
+      // Mock QRCode generation
+      const mockQRCodeUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...';
+      (QRCode.toDataURL as jest.Mock).mockResolvedValue(mockQRCodeUrl);
+
       // Mock update call invoked after QR generation
       jest
         .spyOn(prismaService.aidRequest, 'update')
-        .mockResolvedValue({ ...createdAidRequest, qrCodeUrl: 'mock-qr' });
-      // Mock QRCode library if needed (service uses QRCode.toDataURL). Instead of importing, we just allow any value.
+        .mockResolvedValue({ ...createdAidRequest, qrCodeUrl: mockQRCodeUrl });
 
-      const created = await service.create(createAidRequestDto, 1);
+      const createAidRequestDtoWithUser = { ...createAidRequestDto, userId: 1 };
+      const created = await service.create(createAidRequestDtoWithUser);
       expect(created).toMatchObject({
         id: 1,
         type: 'Food',
         description: 'Need food',
         status: 'Pending',
       });
-      expect(created.qrCodeUrl).toBeDefined();
-      expect(created.qrCodeUrl).toContain('data:image/png;base64');
+
+      // QR code generation happens asynchronously after create
+      expect(QRCode.toDataURL).toHaveBeenCalledWith('aid-request:1');
+      expect(prismaService.aidRequest.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { qrCodeUrl: mockQRCodeUrl },
+      });
     });
 
-    it('should throw an error if the organization is not found', async () => {
+    it('should handle creation failure', async () => {
       const createAidRequestDto = {
         type: 'Food',
         description: 'Need food',
         status: 'Pending',
         userId: 1,
-        organizationId: 1,
+        organizationId: 999,
         locationId: 1,
         isDeleted: false,
         latitude: 40.7128,
         longitude: -74.006,
         recurring: false,
       };
+
       jest
-        .spyOn(prismaService.organization, 'findUnique')
-        .mockResolvedValue(null);
+        .spyOn(prismaService.aidRequest, 'create')
+        .mockRejectedValue(new Error('Database error'));
 
-      await expect(service.create(createAidRequestDto, 1)).rejects.toThrow(
-        Error,
-      );
-    });
-  });
-
-  describe('updateStatus', () => {
-    it('should update the status of a specific aid request', async () => {
-      const result = {
-        id: 1,
-        status: 'Completed',
-        userId: 1,
-        organizationId: 1,
-        type: 'Food',
-        description: 'Need food',
-        isDeleted: false,
-        locationId: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        qrCodeUrl: '',
-        isUrgent: false,
-        recurring: false,
-        verified: false,
-        reported: false,
-        helpCode: '',
-      };
-      jest.spyOn(prismaService.aidRequest, 'findUnique').mockResolvedValue({
-        ...result,
-        status: 'Pending', // existing status different from new status
-      } as any);
-      jest.spyOn(prismaService.aidRequest, 'update').mockResolvedValue(result);
-
-      expect(await service.updateStatus(1, 'Completed', '1', 'admin')).toBe(
-        result,
-      );
-    });
-
-    it('should throw an UnauthorizedException if the user is not an admin', async () => {
-      await expect(
-        service.updateStatus(1, 'Completed', '1', 'user'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.create(createAidRequestDto)).rejects.toThrow(Error);
     });
   });
 
   describe('delete', () => {
     it('should delete a specific aid request', async () => {
-      const result = {
+      const aidRequest = {
         id: 1,
-        isDeleted: true,
+        isDeleted: false,
         userId: 1,
         organizationId: 1,
         type: 'Food',
@@ -357,13 +309,19 @@ describe('AidRequestsService', () => {
         reported: false,
         helpCode: '',
       };
-      jest.spyOn(prismaService.aidRequest, 'findUnique').mockResolvedValue({
-        ...result,
-        isDeleted: false, // existing record not deleted yet
-      } as any);
-      jest.spyOn(prismaService.aidRequest, 'update').mockResolvedValue(result);
 
-      expect(await service.delete(1)).toBe(result);
+      // Mock findOne to return the aid request
+      jest
+        .spyOn(prismaService.aidRequest, 'findUnique')
+        .mockResolvedValue(aidRequest as any);
+
+      // Mock update call for soft delete
+      jest
+        .spyOn(prismaService.aidRequest, 'update')
+        .mockResolvedValue({ ...aidRequest, isDeleted: true } as any);
+
+      // delete method returns void, not the deleted object
+      await expect(service.delete(1)).resolves.toBeUndefined();
     });
   });
 });

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -12,13 +12,16 @@ import * as Joi from 'joi';
 import { CaslModule } from './casl/casl.module';
 import { PrismaService } from './prisma/prisma.service';
 import { VolunteersModule } from './volunteers/volunteers.module';
-import { FaqModule } from './faq/faq.module';
 import { EducationModule } from './education/education.module';
 import { DonorsModule } from './donors/donors.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 
 import { AuditModule } from './audit/audit.module';
 import { AuditLogInterceptor } from './audit/audit-log.interceptor';
+
+// Common Module ve bileşenleri
+import { CommonModule } from '../common/common.module';
+import { ResponseInterceptor, AllExceptionsFilter } from '../common';
 
 @Module({
   imports: [
@@ -48,13 +51,13 @@ import { AuditLogInterceptor } from './audit/audit-log.interceptor';
         limit: 100,
       },
     ]),
+    CommonModule, // Common module'ü ekle
     AuthModule,
     AidRequestsModule,
     OrganizationsModule,
     CaslModule,
     DashboardModule,
     VolunteersModule,
-    FaqModule,
     EducationModule,
     DonorsModule,
     AuditModule,
@@ -70,6 +73,14 @@ import { AuditLogInterceptor } from './audit/audit-log.interceptor';
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditLogInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

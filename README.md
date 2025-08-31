@@ -119,6 +119,12 @@ npm run studio
 # Birim testleri çalıştırmak
 npm run test
 
+# Firebase entegrasyon testleri (emulator ile)
+npm run test:firebase
+
+# Sadece entegrasyon testleri çalıştırmak
+npm run test:integration
+
 # Uçtan uca (E2E) testleri çalıştırmak
 npm run test:e2e
 
@@ -127,6 +133,34 @@ npm run test:e2e:all
 
 # Test tokenları oluşturmak
 npm run test:gen-tokens
+```
+
+### Firebase Emulator
+
+Firebase emulator entegrasyonu sayesinde gerçek Firebase servisleri olmadan test yapabilirsiniz:
+
+```sh
+# Firebase emulator'ları başlatmak
+npm run firebase:start
+
+# Sadece Firebase UI'ı açmak
+npm run firebase:ui
+
+# Firebase emulator ile testleri çalıştırmak (otomatik)
+npm run test:firebase
+```
+
+**Emulator Portları:**
+- Auth: 9099
+- Firestore: 8080  
+- Realtime Database: 9000
+- Storage: 9199
+- Functions: 5001
+- UI: 4000
+
+**Not:** İlk defa çalıştırmadan önce Firebase CLI'ın kurulu olduğundan emin olun:
+```sh
+npm install -g firebase-tools
 ```
 
 ## Proje Yapısı

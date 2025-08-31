@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class UpdateAidRequestDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  readonly title?: string;
+  readonly type?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -19,12 +19,34 @@ export class UpdateAidRequestDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  readonly latitude?: number;
+  readonly organizationId?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
-  readonly longitude?: number;
+  readonly locationId?: number;
 
   @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  readonly isUrgent?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  readonly verified?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  readonly reported?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  readonly recurring?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
   readonly isDeleted?: boolean;
 }

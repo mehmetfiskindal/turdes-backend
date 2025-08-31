@@ -27,10 +27,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { OrganizationRatingDto } from './dto/organization-rating.dto';
-
-// Roles için bir decorator oluşturuyorum
-export const Roles = (...roles: Role[]) => SetMetadata('roles', roles);
-
+import { Roles } from '../auth/decorators/roles.decorator';
 @ApiTags('organizations') // Grouping under "organizations" in Swagger documentation
 @Controller('organizations')
 export class OrganizationsController {

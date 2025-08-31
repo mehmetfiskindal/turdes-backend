@@ -23,9 +23,14 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:integration": "jest --config ./test/jest-integration.json",
+    "test:integration:watch": "jest --config ./test/jest-integration.json --watch",
+    "test:firebase": "firebase emulators:exec --only auth,firestore,database,storage 'npm run test:integration'",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:e2e:all": "jest --config ./test/jest-e2e.json all-tests.e2e-spec.ts",
-    "test:gen-tokens": "ts-node test/generate-test-tokens.ts"
+    "test:gen-tokens": "ts-node test/generate-test-tokens.ts",
+    "firebase:start": "firebase emulators:start",
+    "firebase:ui": "firebase emulators:start --only ui"
   },
   "dependencies": {
     "@casl/ability": "^6.7.2",

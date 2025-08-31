@@ -1,26 +1,202 @@
 import {
   Injectable,
-  UnauthorizedException,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AidRequest } from '@prisma/client';
 import { CreateAidRequestDto } from './dto/create-aid-request.dto';
-import { FirebaseAdminService } from '../firebase/fcm/firebase-admin.service';
+import { UpdateAidRequestDto } from './dto/update-aid-request.dto';
+import { BaseService, PaginatedResult } from '../../common';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
-export class AidRequestsService {
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly firebaseAdminService: FirebaseAdminService,
-  ) {}
+export class AidRequestsService extends BaseService<
+  AidRequest,
+  CreateAidRequestDto,
+  UpdateAidRequestDto
+> {
+  constructor(prismaService: PrismaService) {
+    super(prismaService);
+  }
 
+  // BaseService metodlarını override ediyoruz
+  async create(data: CreateAidRequestDto): Promise<AidRequest> {
+    const helpCode = uuidv4().slice(0, 8).toUpperCase();
+
+    const aidRequest = await this.prisma.aidRequest.create({
+      data: {
+        ...data,
+        helpCode,
+      },
+      include: {
+        user: true,
+        organization: true,
+        location: true,
+      },
+    });
+
+    // QR kod oluştur
+    if (aidRequest.id) {
+      await this.generateQRCode(aidRequest.id);
+    }
+
+    return aidRequest;
+  }
+
+  async findAll(): Promise<AidRequest[]> {
+    return this.prisma.aidRequest.findMany({
+      where: { isDeleted: false },
+      include: {
+        user: true,
+        organization: true,
+        location: true,
+        Comment: true,
+        Document: true,
+      },
+      orderBy: { id: 'desc' },
+    });
+  }
+
+  async findOne(id: number): Promise<AidRequest | null> {
+    const aidRequest = await this.prisma.aidRequest.findUnique({
+      where: { id, isDeleted: false },
+      include: {
+        user: true,
+        organization: true,
+        location: true,
+        Comment: true,
+        Document: true,
+      },
+    });
+
+    if (!aidRequest) {
+      throw new NotFoundException(`${id} ID'li yardım talebi bulunamadı`);
+    }
+
+    return aidRequest;
+  }
+
+  async update(id: number, data: UpdateAidRequestDto): Promise<AidRequest> {
+    await this.findOne(id); // Varlık kontrolü
+
+    return this.prisma.aidRequest.update({
+      where: { id },
+      data,
+      include: {
+        user: true,
+        organization: true,
+        location: true,
+      },
+    });
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.findOne(id); // Varlık kontrolü
+
+    await this.prisma.aidRequest.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
+  }
+
+  // Sayfalanmış yardım talepleri getir
+  async getPaginated(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    userId?: number,
+  ): Promise<PaginatedResult<AidRequest>> {
+    const {
+      skip,
+      take,
+      where: searchWhere,
+    } = this.createPaginationQuery(page, limit, search, [
+      'type',
+      'description',
+      'helpCode',
+    ]);
+
+    const where = {
+      ...searchWhere,
+      isDeleted: false,
+      ...(userId && { userId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.aidRequest.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          user: true,
+          organization: true,
+          location: true,
+        },
+        orderBy: { id: 'desc' },
+      }),
+      this.prisma.aidRequest.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
+  private async generateQRCode(aidRequestId: number): Promise<void> {
+    try {
+      const qrData = `aid-request:${aidRequestId}`;
+      const qrCodeUrl = await QRCode.toDataURL(qrData);
+
+      await this.prisma.aidRequest.update({
+        where: { id: aidRequestId },
+        data: { qrCodeUrl },
+      });
+    } catch (error) {
+      // QR kod oluşturma hatası kritik değil, sadece log
+      console.error('QR kod oluşturma hatası:', error);
+    }
+  }
+
+  // Kullanıcıya özel yardım talepleri
+  async findAllByUser(userId: number): Promise<AidRequest[]> {
+    return this.prisma.aidRequest.findMany({
+      where: { userId, isDeleted: false },
+      include: {
+        user: true,
+        organization: true,
+        location: true,
+        Comment: true,
+        Document: true,
+      },
+      orderBy: { id: 'desc' },
+    });
+  }
+
+  // Yardım koduna göre bul
+  async findByHelpCode(helpCode: string): Promise<AidRequest | null> {
+    return this.prisma.aidRequest.findFirst({
+      where: { helpCode, isDeleted: false },
+      include: {
+        user: true,
+        organization: true,
+        location: true,
+        Comment: true,
+        Document: true,
+      },
+    });
+  }
+
+  // Yorum ekleme
   async addComment(aidRequestId: number, content: string) {
-    // AidRequest'in varlığını kontrol et
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
+    const aidRequest = await this.prisma.aidRequest.findUnique({
       where: { id: aidRequestId },
     });
 
@@ -34,7 +210,7 @@ export class AidRequestsService {
       throw new BadRequestException('Yorum içeriği boş olamaz');
     }
 
-    return this.prismaService.comment.create({
+    return this.prisma.comment.create({
       data: {
         content: content,
         aidRequest: {
@@ -47,592 +223,70 @@ export class AidRequestsService {
   }
 
   // Belge yükleme
-  async uploadDocument(
-    aidRequestId: number,
-    documentName: string,
-    documentUrl: string,
-  ) {
-    const numericId = parseInt(aidRequestId as unknown as string, 10);
-    if (isNaN(numericId)) {
-      throw new BadRequestException('Geçersiz yardım talebi ID formatı');
-    }
-
-    // AidRequest'in varlığını kontrol et
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id: numericId },
+  async uploadDocument(aidRequestId: number, name: string, url: string) {
+    const aidRequest = await this.prisma.aidRequest.findUnique({
+      where: { id: aidRequestId },
     });
 
     if (!aidRequest) {
       throw new NotFoundException(
-        `${numericId} ID'li yardım talebi bulunamadı`,
+        `${aidRequestId} ID'li yardım talebi bulunamadı`,
       );
     }
 
-    return this.prismaService.document.create({
+    return this.prisma.document.create({
       data: {
-        name: documentName,
-        url: documentUrl,
-        aidRequest: {
-          connect: { id: numericId },
-        },
+        name,
+        url,
+        aidRequestId,
       },
     });
   }
 
-  // Tüm yardım taleplerini listeleme
-  async findAll(userId: number): Promise<AidRequest[]> {
-    return this.prismaService.aidRequest.findMany({
-      where: { userId: userId, isDeleted: false },
-    });
+  // Tekrarlayan talep olarak işaretle
+  async markAsRecurring(id: number): Promise<AidRequest> {
+    return this.update(id, { recurring: true });
   }
 
-  async findOne(id: number, userId: number, organizationId: number) {
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
+  // Tekrarlayan talep işaretini kaldır
+  async unmarkAsRecurring(id: number): Promise<AidRequest> {
+    return this.update(id, { recurring: false });
+  }
+
+  // Kullanıcının tekrarlayan taleplerini getir
+  async getUserRecurringRequests(userId: number): Promise<AidRequest[]> {
+    return this.prisma.aidRequest.findMany({
       where: {
-        id: Number(id),
-        userId: userId,
+        userId,
+        recurring: true,
         isDeleted: false,
-        organizationId: Number(organizationId),
       },
       include: {
-        location: true,
-      },
-    });
-
-    if (!aidRequest || aidRequest.userId !== userId) {
-      throw new UnauthorizedException(
-        'You do not have access to this aid request',
-      );
-    }
-
-    return aidRequest;
-  }
-
-  async create(createAidRequestDto: CreateAidRequestDto, userId: number) {
-    if (createAidRequestDto.organizationId) {
-      const organization = await this.prismaService.organization.findUnique({
-        where: { id: createAidRequestDto.organizationId },
-      });
-
-      if (!organization) {
-        throw new NotFoundException(
-          `Organizasyon bulunamadı. ID: ${createAidRequestDto.organizationId}`,
-        );
-      }
-    }
-
-    const location = await this.prismaService.location.create({
-      data: {
-        latitude: createAidRequestDto.latitude,
-        longitude: createAidRequestDto.longitude,
-      },
-    });
-
-    const aidRequest = await this.prismaService.aidRequest.create({
-      data: {
-        type: createAidRequestDto.type,
-        description: createAidRequestDto.description,
-        status: createAidRequestDto.status,
-        organization: createAidRequestDto.organizationId
-          ? { connect: { id: createAidRequestDto.organizationId } }
-          : undefined,
-        location: {
-          connect: { id: location.id },
-        },
-        user: {
-          connect: { id: userId },
-        },
-        recurring: createAidRequestDto.recurring,
-      },
-    });
-
-    const qrCodeUrl = await QRCode.toDataURL(`aidRequest:${aidRequest.id}`);
-    await this.prismaService.aidRequest.update({
-      where: { id: aidRequest.id },
-      data: { qrCodeUrl },
-    });
-
-    return { ...aidRequest, qrCodeUrl };
-  }
-
-  // Benzersiz yardım kodu ile yardım talebi oluşturma
-  async createWithHelpCode(
-    createAidRequestDto: CreateAidRequestDto,
-    userId: number,
-  ) {
-    if (createAidRequestDto.organizationId) {
-      const organization = await this.prismaService.organization.findUnique({
-        where: { id: createAidRequestDto.organizationId },
-      });
-
-      if (!organization) {
-        throw new NotFoundException(
-          `Organizasyon bulunamadı. ID: ${createAidRequestDto.organizationId}`,
-        );
-      }
-    }
-
-    // Benzersiz bir yardım kodu oluştur
-    const helpCode = uuidv4().substring(0, 10);
-
-    const aidRequest = await this.prismaService.aidRequest.create({
-      data: {
-        type: createAidRequestDto.type,
-        description: createAidRequestDto.description,
-        status: createAidRequestDto.status || 'pending',
-        organization: createAidRequestDto.organizationId
-          ? { connect: { id: createAidRequestDto.organizationId } }
-          : undefined,
-        user: {
-          connect: { id: userId },
-        },
-        location: {
-          create: {
-            latitude: createAidRequestDto.latitude,
-            longitude: createAidRequestDto.longitude,
-          },
-        },
-        recurring: createAidRequestDto.recurring || false,
-        isUrgent: createAidRequestDto.isUrgent || false,
-        helpCode: helpCode, // Benzersiz yardım kodunu ayrı bir alanda saklıyoruz
-      },
-    });
-
-    return {
-      ...aidRequest,
-      helpCode, // Yanıtta yardım kodunu döndür
-    };
-  }
-
-  // Yardım kodunu kullanarak mevcut bir yardım talebine konum bilgisi ekleme
-  async addLocationToAidRequest(
-    helpCode: string,
-    latitude: number,
-    longitude: number,
-  ) {
-    // HelpCode alanında yardım kodunu ara
-    const aidRequest = await this.prismaService.aidRequest.findFirst({
-      where: {
-        helpCode: helpCode,
-      },
-    });
-
-    if (!aidRequest) {
-      throw new NotFoundException(
-        `Geçerli bir yardım kodu bulunamadı: ${helpCode}`,
-      );
-    }
-
-    // Konum oluştur
-    const location = await this.prismaService.location.create({
-      data: {
-        latitude,
-        longitude,
-      },
-    });
-
-    // Yardım talebini güncelle ve konumu bağla
-    const updatedRequest = await this.prismaService.aidRequest.update({
-      where: { id: aidRequest.id },
-      data: {
-        locationId: location.id,
-        // Gerçek QR kod oluştur
-        qrCodeUrl: await QRCode.toDataURL(`aidRequest:${aidRequest.id}`),
-      },
-      include: {
-        location: true,
         user: true,
         organization: true,
+        location: true,
+        Comment: true,
+        Document: true,
       },
-    });
-
-    return updatedRequest;
-  }
-
-  async updateStatus(
-    id: number,
-    status: string,
-    userId: string,
-    userRole: string,
-  ) {
-    if (userRole !== 'admin') {
-      throw new UnauthorizedException(
-        'Yardım taleplerinin durumunu sadece yöneticiler güncelleyebilir',
-      );
-    }
-
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!aidRequest) {
-      throw new NotFoundException(`${id} ID'li yardım talebi bulunamadı`);
-    }
-
-    if (aidRequest.status === status) {
-      throw new BadRequestException(
-        `Yardım talebi zaten ${status} durumunda bulunuyor`,
-      );
-    }
-
-    const updatedAidRequest = await this.prismaService.aidRequest.update({
-      where: { id: Number(id) },
-      data: { status: status },
-    });
-
-    const message = `Yardım talebinizin durumu güncellendi: ${status}`;
-    await this.firebaseAdminService.sendPushNotification(
-      userId,
-      'Yardım Talebi Durum Güncellemesi',
-      message,
-    );
-
-    return updatedAidRequest;
-  }
-
-  // Yardım talebi silinemez , sadece isDeleted parametresi true olur
-  async delete(id: number) {
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!aidRequest) {
-      throw new NotFoundException(`${id} ID'li yardım talebi bulunamadı`);
-    }
-
-    if (aidRequest.isDeleted) {
-      throw new BadRequestException(
-        `${id} ID'li yardım talebi zaten silinmiş durumda`,
-      );
-    }
-
-    return this.prismaService.aidRequest.update({
-      where: { id: Number(id) },
-      data: { isDeleted: true },
+      orderBy: { id: 'desc' },
     });
   }
 
-  // Prioritize aid requests based on user categories
-  async prioritizeAidRequests() {
-    const aidRequests = await this.prismaService.aidRequest.findMany({
-      where: { isDeleted: false },
+  // Tüm tekrarlayan talepleri getir (admin için)
+  async getAllRecurringRequests(): Promise<AidRequest[]> {
+    return this.prisma.aidRequest.findMany({
+      where: {
+        recurring: true,
+        isDeleted: false,
+      },
       include: {
         user: true,
+        organization: true,
+        location: true,
+        Comment: true,
+        Document: true,
       },
+      orderBy: { id: 'desc' },
     });
-
-    // Custom sorting logic based on user categories
-    return aidRequests.sort((a, b) => {
-      const categoryPriority = {
-        ELDERLY: 1,
-        DISABLED: 2,
-        CHRONIC_ILLNESS: 3,
-        NONE: 4,
-      };
-
-      return (
-        categoryPriority[a.user.category] - categoryPriority[b.user.category]
-      );
-    });
-  }
-
-  private calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ): number {
-    // Haversine formula to calculate distance between two points on Earth
-    const R = 6371; // Earth's radius in km
-    const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon1 - lon2);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) *
-        Math.cos(this.deg2rad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in km
-    return distance;
-  }
-
-  private deg2rad(deg: number): number {
-    return deg * (Math.PI / 180);
-  }
-
-  async trackRecurringAidRequests() {
-    const recurringAidRequests = await this.prismaService.aidRequest.findMany({
-      where: { recurring: true, isDeleted: false },
-    });
-
-    for (const aidRequest of recurringAidRequests) {
-      const message = `Scheduled support needed for recurring aid request: ${aidRequest.description}`;
-      await this.firebaseAdminService.sendPushNotification(
-        aidRequest.userId.toString(),
-        'Scheduled Support Notification',
-        message,
-      );
-    }
-  }
-
-  async verifyAidRequest(aidRequestId: number) {
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id: aidRequestId },
-    });
-
-    if (!aidRequest) {
-      throw new NotFoundException(
-        `${aidRequestId} ID'li yardım talebi bulunamadı`,
-      );
-    }
-
-    if (aidRequest.verified) {
-      throw new BadRequestException(
-        `${aidRequestId} ID'li yardım talebi zaten onaylanmış durumda`,
-      );
-    }
-
-    return this.prismaService.aidRequest.update({
-      where: { id: aidRequestId },
-      data: { verified: true },
-    });
-  }
-
-  async reportSuspiciousAidRequest(aidRequestId: number) {
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id: aidRequestId },
-    });
-
-    if (!aidRequest) {
-      throw new NotFoundException(
-        `${aidRequestId} ID'li yardım talebi bulunamadı`,
-      );
-    }
-
-    if (aidRequest.reported) {
-      throw new BadRequestException(
-        `${aidRequestId} ID'li yardım talebi zaten şüpheli olarak raporlanmış durumda`,
-      );
-    }
-
-    return this.prismaService.aidRequest.update({
-      where: { id: aidRequestId },
-      data: { reported: true },
-    });
-  }
-
-  async verifyAidDeliveryByQRCode(
-    qrCodeData: string,
-    newStatus: string = 'Delivered',
-  ) {
-    // Extract aid request ID from QR code data
-    const aidRequestId = parseInt(qrCodeData.replace('aidRequest:', ''));
-
-    if (isNaN(aidRequestId)) {
-      throw new BadRequestException(
-        'Geçersiz QR kod verisi. Doğru format: aidRequest:[ID]',
-      );
-    }
-
-    // Verify aid request exists
-    const aidRequest = await this.prismaService.aidRequest.findUnique({
-      where: { id: aidRequestId },
-      include: { user: true },
-    });
-
-    if (!aidRequest) {
-      throw new NotFoundException(
-        `${aidRequestId} ID'li yardım talebi bulunamadı`,
-      );
-    }
-
-    // Update the aid request status
-    const updatedAidRequest = await this.prismaService.aidRequest.update({
-      where: { id: aidRequestId },
-      data: { status: newStatus },
-    });
-
-    // Send notification to the user
-    const message = `Yardım talebiniz (ID: ${aidRequestId}) durumu: ${newStatus.toLowerCase()}`;
-    await this.firebaseAdminService.sendPushNotification(
-      aidRequest.userId.toString(),
-      'Yardım Teslim Güncelleme',
-      message,
-    );
-
-    return updatedAidRequest;
-  }
-
-  async searchAidRequests(filters: any) {
-    const {
-      type,
-      status,
-      latitude,
-      longitude,
-      radiusKm = 10,
-      urgentOnly = false,
-      userCategory,
-      recurring,
-      verifiedOnly,
-      searchTerm,
-      dateFrom,
-      dateTo,
-      sortBy = 'createdAt',
-      sortDirection = 'desc',
-      page = 1,
-      limit = 10,
-    } = filters;
-
-    // Build the where clause based on filters
-    const where: any = {
-      isDeleted: false,
-    };
-
-    if (type) {
-      where.type = type;
-    }
-
-    if (status) {
-      where.status = status;
-    }
-
-    if (urgentOnly) {
-      where.isUrgent = true;
-    }
-
-    if (recurring !== undefined) {
-      where.recurring = recurring;
-    }
-
-    if (verifiedOnly) {
-      where.verified = true;
-    }
-
-    if (searchTerm) {
-      where.description = {
-        contains: searchTerm,
-        mode: 'insensitive', // Case insensitive search
-      };
-    }
-
-    if (dateFrom) {
-      where.createdAt = {
-        ...where.createdAt,
-        gte: new Date(dateFrom),
-      };
-    }
-
-    if (dateTo) {
-      where.createdAt = {
-        ...where.createdAt,
-        lte: new Date(dateTo),
-      };
-    }
-
-    // Handle geographic search if coordinates are provided
-    let locationFilter = {};
-    if (latitude && longitude) {
-      locationFilter = {
-        location: {
-          latitude: {
-            gte: parseFloat(latitude as any) - radiusKm / 111,
-            lte: parseFloat(latitude as any) + radiusKm / 111,
-          },
-          longitude: {
-            gte:
-              parseFloat(longitude as any) -
-              radiusKm /
-                (111 * Math.cos((parseFloat(latitude as any) * Math.PI) / 180)),
-            lte:
-              parseFloat(longitude as any) +
-              radiusKm /
-                (111 * Math.cos((parseFloat(latitude as any) * Math.PI) / 180)),
-          },
-        },
-      };
-    }
-
-    // User category filter
-    let userFilter = {};
-    if (userCategory) {
-      userFilter = {
-        user: {
-          category: userCategory,
-        },
-      };
-    }
-
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-
-    // Execute the query
-    const [aidRequests, total] = await Promise.all([
-      this.prismaService.aidRequest.findMany({
-        where: {
-          ...where,
-          ...locationFilter,
-          ...userFilter,
-        },
-        include: {
-          user: true,
-          location: true,
-          organization: true,
-        },
-        orderBy: {
-          [sortBy]: sortDirection,
-        },
-        skip,
-        take: limit,
-      }),
-      this.prismaService.aidRequest.count({
-        where: {
-          ...where,
-          ...locationFilter,
-          ...userFilter,
-        },
-      }),
-    ]);
-
-    // Add distance calculation if coordinates were provided
-    let aidRequestsWithMeta = aidRequests;
-    if (latitude && longitude) {
-      aidRequestsWithMeta = aidRequests.map((request) => {
-        const distance = this.calculateDistance(
-          parseFloat(latitude as any),
-          parseFloat(longitude as any),
-          request.location.latitude,
-          request.location.longitude,
-        );
-
-        // Create a properly typed object with all required properties preserved
-        return {
-          ...request,
-          distanceKm: parseFloat(distance.toFixed(2)),
-        };
-      }) as typeof aidRequests;
-    }
-
-    // If sorting by distance was requested
-    if (sortBy === 'distance') {
-      aidRequestsWithMeta.sort((a, b) => {
-        // Use a more type-safe way to access the distanceKm property
-        const aDistance = 'distanceKm' in a ? (a as any).distanceKm : 0;
-        const bDistance = 'distanceKm' in b ? (b as any).distanceKm : 0;
-        return sortDirection === 'asc'
-          ? aDistance - bDistance
-          : bDistance - aDistance;
-      });
-    }
-
-    return {
-      data: aidRequestsWithMeta,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
   }
 }
